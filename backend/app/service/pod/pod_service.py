@@ -24,3 +24,6 @@ class PodService:
     
     def join_pod(self, pod_id: int, user_id: int) -> bool:
         return self.command_repo.join_pod(pod_id, user_id)
+    def search_pod(self, query: str, limit: int = 100, offset: int = 0) -> List[PodResponse]:
+        pods_data = self.query_repo.find_pods_by_query(query, limit, offset)
+        return [PodResponse(**pod) for pod in pods_data]

@@ -29,7 +29,21 @@ async def create_pod(
     except Exception:
         raise HTTPException(status_code=500, detail="Pod 생성 중 오류가 발생했습니다.")
 
-@router.get("/{pod_id}", response_model=PodResponse)
+
+
+@router.get("/search", response_model=List[PodResponse])
+async def get_pod(
+    query: str,
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    pod_service: PodService = Depends(get_pod_service)
+):
+    """Pod 검색 조회"""
+    pod = pod_service.search_pod(query,limit,offset)
+    if not pod:
+        raise HTTPException(status_code=404, detail="Pod not found")
+    return pod
+@router.get("/detail/{pod_id}", response_model=PodResponse)
 async def get_pod(
     pod_id: int,
     pod_service: PodService = Depends(get_pod_service)
@@ -39,7 +53,6 @@ async def get_pod(
     if not pod:
         raise HTTPException(status_code=404, detail="Pod not found")
     return pod
-
 @router.get("/", response_model=List[PodResponse])
 async def list_pods(
     limit: int = Query(100, ge=1, le=1000),
