@@ -39,19 +39,23 @@ class PodQueryRepository:
             SELECT 
                 p.*, 
                 u.username AS host_username,
-                COUNT(pm.user_id) AS current_member
+                COUNT(DISTINCT pm.user_id) AS current_member
                 FROM Pod p
                 JOIN User u ON p.host_user_id = u.user_id
                 LEFT JOIN Pod_Member pm ON p.pod_id = pm.pod_id
+                LEFT JOIN CategoryLink cl ON p.pod_id = cl.pod_id
+                LEFT JOIN Category c ON cl.category_id = c.category_id
                 WHERE
                     p.title LIKE %s
                 OR
                     p.content LIKE %s
                 OR
                     p.place LIKE %s
+                OR
+                    c.category_name LIKE %s
                 GROUP BY p.pod_id
                 ORDER BY p.event_time DESC
                 LIMIT %s OFFSET %s
             """
-            cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
+            cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
             return cursor.fetchall()
