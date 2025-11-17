@@ -1,4 +1,4 @@
-import api from './axiosInstance';
+import { api } from './api';
 
 /**
  * 전체 POD 조회

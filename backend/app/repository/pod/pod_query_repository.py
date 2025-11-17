@@ -20,9 +20,14 @@ class PodQueryRepository:
     def find_all_pods(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             sql = """
-                SELECT p.*, u.username AS host_username
+            SELECT 
+                p.*, 
+                u.username AS host_username,
+                COUNT(pm.user_id) AS current_member
                 FROM Pod p
                 JOIN User u ON p.host_user_id = u.user_id
+                LEFT JOIN Pod_Member pm ON p.pod_id = pm.pod_id
+                GROUP BY p.pod_id
                 ORDER BY p.event_time DESC
                 LIMIT %s OFFSET %s
             """

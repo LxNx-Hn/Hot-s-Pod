@@ -5,12 +5,15 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import SizeComponent from "../../common/icon/SizeComponent";
 import Footer from "../../common/layout/footer/index.jsx"
 import { useMe } from "../../../../src/queries/useMe.js";
 import { useDispatch } from "react-redux";
 import AddPodContainer from "../../common/modals/AddPod/AddPodContainer.jsx";
+import { usePod } from '../../../queries/usePodMembers.js';
+import { LogOut } from '../../../api/logout.js';
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -48,7 +51,9 @@ export default function MyPageUI() {
     const { data, isLoading, isError } = useMe();
     const [user,setUser] = useState(data);
     const [isPodModalOpen, setIsPodModalOpen] = useState(false);
+    const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { data: podsData, isLoading: podLoading, isError: isPodError } = usePod(data?.user_id);
 
     const handleOpenPodModal = () => {
             setIsPodModalOpen(true);
@@ -70,6 +75,22 @@ export default function MyPageUI() {
                 alert('POD 생성에 실패했습니다: ' + error.message);
             }
         };
+    const logOut = async() => {
+        await LogOut();
+        navigate("/login");
+    }
+
+    useEffect(()=>{
+        console.log("podsData");
+        console.log(podsData);
+    },[podsData])
+    useEffect(() => {
+        console.log(user?.user_id);
+    }, [user]);
+    useEffect(() => {
+        if (data)
+            setUser(data);
+    }, [data]);
     return(
         <div className="flex flex-col w-full gap-8">
             <div className="flex flex-row justify-between border-b-[#E9EBEE] border-b-[2px] p-6">
@@ -100,19 +121,14 @@ export default function MyPageUI() {
             </Box>
             <CustomTabPanel value={value} index={0}>
                 <div className='flex flex-col gap-2'>
-                    <Card
-                        title={"코딩 스터디 모집"}
-                        description={"카테고리: 스터디"}
-                        peoples={"참여 인원: 3/5"}
+                    {podsData?podsData.map((value,index)=>{
+                        return (<Card
+                        title={value.title}
+                        description={value.content}
+                        peoples={`3/${value.max_peoples}`}
                         image={"Image"}
-                    />
-                    <Card
-                        title={"코딩 스터디 모집"}
-                        description={"카테고리: 스터디"}
-                        peoples={"참여 인원: 3/5"}
-                        image={"Image"}
-                    />
-                    <div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>
+                    />)
+                    }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>
                         <div className='flex flex-col bg-[#F9FAFB] py-4 rounded-xl cursor-pointer'>
                             <div className='flex flex-row justify-center'>
                                 <SizeComponent Component={AddCircleOutlineIcon} className={"text-[#9CA3AF]"} fontSize={48}/>                        
@@ -125,7 +141,11 @@ export default function MyPageUI() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>}
+                    {podsData?<div className='flex flex-row w-full justify-center py-2'>
+                                    <div className='text-black font-bold bg-[#FFC107] text-center py-2 px-8 rounded-full cursor-pointer' onClick={handleOpenPodModal}>새로운 Pod 만들기</div>
+                                </div>:<></>}
+                    
                     <div className='flex flex-col gap-4 p-4'>
                         <div className='flex flex-row justify-between'>
                             <div className='text-xl font-semibold'>
@@ -139,7 +159,7 @@ export default function MyPageUI() {
                             </div>
                             <KeyboardArrowRightIcon/>
                         </div>
-                        <div className='flex flex-row justify-between text-[#EF3737]'>
+                        <div className='flex flex-row justify-between text-[#EF3737] cursor-pointer' onClick={logOut}>
                             <div className='text-xl font-semibold'>
                                 로그아웃
                             </div>

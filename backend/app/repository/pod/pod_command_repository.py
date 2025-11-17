@@ -17,6 +17,8 @@ class PodCommandRepository:
                 pod_data.place,
                 pod_data.title,
                 pod_data.content,
+                pod_data.min_peoples,
+                pod_data.max_peoples,
                 category_ids_json
             ))
             result = cursor.fetchone()

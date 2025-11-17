@@ -9,7 +9,9 @@ class PodCreateRequest(BaseModel):
     place: str = Field(..., max_length=255)
     title: str = Field(..., max_length=255)
     content: Optional[str] = None
-    category_ids: List[int] = Field(..., min_items=1)
+    min_peoples: int
+    max_peoples: int
+    category_ids: List[int] = Field(..., min_items=0)
 
 class PodResponse(BaseModel):
     pod_id: int
@@ -18,6 +20,9 @@ class PodResponse(BaseModel):
     place: str
     title: str
     content: Optional[str]
+    min_peoples: int
+    max_peoples: int
+    current_member: int
     created_at: datetime
     updated_at: datetime
     host_username: Optional[str] = None

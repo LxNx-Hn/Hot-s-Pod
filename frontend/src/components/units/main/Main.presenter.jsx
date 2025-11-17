@@ -89,7 +89,7 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                                     <div className="font-bold text-lg truncate">{pod.title}</div>
                                     <div className="text-[#888888] text-xs">{pod.content}</div>
                                     <div className='flex flex-row justify-between'>
-                                        <div className="text-[#888888] text-xs">모집중 (2/6)명</div>
+                                        <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
                                         {Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
                                         <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>:
                                         <div className='text-[#FDC862] text-xs font-semibold'>D-{Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}</div>

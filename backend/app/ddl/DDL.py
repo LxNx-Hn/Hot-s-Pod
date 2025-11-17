@@ -66,6 +66,8 @@ CREATE TABLE `Pod` (
   `place` VARCHAR(255) NOT NULL,
   `title` VARCHAR(255) NOT NULL,
   `content` TEXT NULL,
+  `min_peoples` INT NOT NULL,
+  `max_peoples` INT NOT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`pod_id`),
@@ -190,6 +192,8 @@ CREATE PROCEDURE `sp_CreatePod`(
     IN `in_place` VARCHAR(255),
     IN `in_title` VARCHAR(255),
     IN `in_content` TEXT,
+    IN `in_min_peoples` INT,
+    IN `in_max_peoples` INT,
     IN `in_category_ids` JSON
 )
 BEGIN
@@ -200,8 +204,8 @@ BEGIN
 
     START TRANSACTION;
 
-    INSERT INTO `Pod` (`host_user_id`, `event_time`, `place`, `title`, `content`)
-    VALUES (`in_host_user_id`, `in_event_time`, `in_place`, `in_title`, `in_content`);
+    INSERT INTO `Pod` (`host_user_id`, `event_time`, `place`, `title`, `content`, `min_peoples`, `max_peoples`)
+    VALUES (`in_host_user_id`, `in_event_time`, `in_place`, `in_title`, `in_content`, `in_min_peoples`, `in_max_peoples`);
 
     SET `new_pod_id` = LAST_INSERT_ID();
     SET `_length` = JSON_LENGTH(`in_category_ids`);
@@ -230,6 +234,8 @@ BEGIN
         p.`content`,
         p.`place`,
         p.`event_time`,
+        p.`min_peoples`,
+        p.`max_peoples`,
         (SELECT GROUP_CONCAT(c.`category_name` SEPARATOR ', ')
          FROM `CategoryLink` cl
          JOIN `Category` c ON cl.`category_id` = c.`category_id`
@@ -251,6 +257,8 @@ BEGIN
         p.`place`,
         p.`title`,
         p.`content`,
+        p.`min_peoples`,
+        p.`max_peoples`,
         p.`created_at`,
         p.`updated_at`,
         u.`username` AS `host_username`
@@ -310,10 +318,10 @@ INSERT INTO `User` (`username`, `phonenumber`) VALUES
 ('테스트유저2', '010-2345-6789'),
 ('테스트유저3', '010-3456-7890');
 
-INSERT INTO `Pod` (`host_user_id`, `event_time`, `place`, `title`, `content`) VALUES
-(1, '2025-12-15 14:00:00', '강남역 2번 출구', '주말 러닝 모임', '같이 한강 러닝하실 분 구합니다!'),
-(2, '2025-12-20 19:00:00', '홍대 카페 XXX', '영화 스터디 모임', '영화 이야기 나누며 영어 공부해요.'),
-(3, '2025-12-25 10:00:00', '성수동 베이킹 스튜디오', '베이킹 클래스', '초보자도 환영합니다.');
+INSERT INTO `Pod` (`host_user_id`, `event_time`, `place`, `title`, `content`, `min_peoples`, `max_peoples`) VALUES
+(1, '2025-12-15 14:00:00', '강남역 2번 출구', '주말 러닝 모임', '같이 한강 러닝하실 분 구합니다!', 5, 10),
+(2, '2025-12-20 19:00:00', '홍대 카페 XXX', '영화 스터디 모임', '영화 이야기 나누며 영어 공부해요.', 2, 5),
+(3, '2025-12-25 10:00:00', '성수동 베이킹 스튜디오', '베이킹 클래스', '초보자도 환영합니다.', 2, 10);
 
 INSERT INTO `CategoryLink` (`pod_id`, `category_id`) VALUES
 (1, 3),

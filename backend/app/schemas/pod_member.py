@@ -22,3 +22,15 @@ class PodMemberResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class PodMemberListResponse(BaseModel):
+    pod_member_id: int
+    user_id: int
+    pod_id: int
+    amount: int
+    place_start: Optional[str]
+    place_end: Optional[str]
+    joined_at: datetime
+    username: Optional[str] = None
+
+    class Config:
+        from_attributes = True

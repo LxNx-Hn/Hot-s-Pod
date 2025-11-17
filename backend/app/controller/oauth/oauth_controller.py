@@ -120,15 +120,16 @@ async def refresh_token(request: Request, response: Response):
     return {"ok": True}
 
 
-@router.get("/logout")
-async def logout(access_token: str = Query(..., description="카카오 액세스 토큰")):
+@router.post("/logout")
+async def logout(request: Request,response: Response):
     try:
-        logout_response = requests.post(
-            "https://kapi.kakao.com/v1/user/logout",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=10
-        )
-        logout_response.raise_for_status()
+        # logout_response = requests.post(
+        #     "https://kapi.kakao.com/v1/user/logout",
+        #     headers={"Authorization": f"Bearer {access_token}"},
+        #     timeout=10
+        # )
+        # logout_response.raise_for_status()
+        response.delete_cookie("access_token")
         return {"message": "로그아웃 성공"}
     except requests.exceptions.RequestException:
         raise HTTPException(status_code=400, detail="카카오 로그아웃 처리 중 오류가 발생했습니다.")
