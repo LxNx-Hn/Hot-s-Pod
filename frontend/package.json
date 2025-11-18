@@ -16,7 +16,7 @@
     "@mui/material": "^6.4.3",
     "@reduxjs/toolkit": "^2.5.1",
     "@tanstack/react-query": "^5.64.2",
-    "antd": "^5.23.3",
+    "antd": "^5.28.1",
     "autoprefixer": "^10.4.21",
     "axios": "^1.7.9",
     "dateutil": "^0.1.0",

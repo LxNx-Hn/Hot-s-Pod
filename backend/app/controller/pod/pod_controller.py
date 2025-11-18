@@ -5,7 +5,7 @@ from app.database import get_db_connection
 from app.repository.pod.pod_command_repository import PodCommandRepository
 from app.repository.pod.pod_query_repository import PodQueryRepository
 from app.service.pod.pod_service import PodService
-from app.schemas.pod import PodCreateRequest, PodResponse
+from app.schemas.pod import PodCreateRequest, PodResponse, PodDetailResponse
 from typing import List
 
 router = APIRouter(prefix="/pods", tags=["Pods"])
@@ -43,13 +43,13 @@ async def get_pod(
     if not pod:
         raise HTTPException(status_code=404, detail="Pod not found")
     return pod
-@router.get("/detail/{pod_id}", response_model=PodResponse)
+@router.get("/detail/{pod_id}", response_model=PodDetailResponse)
 async def get_pod(
     pod_id: int,
     pod_service: PodService = Depends(get_pod_service)
 ):
     """Pod 상세 조회"""
-    pod = pod_service.get_pod(pod_id)
+    pod = pod_service.get_podDetail(pod_id)
     if not pod:
         raise HTTPException(status_code=404, detail="Pod not found")
     return pod

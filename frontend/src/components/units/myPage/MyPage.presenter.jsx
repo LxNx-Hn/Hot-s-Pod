@@ -12,7 +12,7 @@ import Footer from "../../common/layout/footer/index.jsx"
 import { useMe } from "../../../../src/queries/useMe.js";
 import { useDispatch } from "react-redux";
 import AddPodContainer from "../../common/modals/AddPod/AddPodContainer.jsx";
-import { usePod } from '../../../queries/usePodMembers.js';
+import { usePodMe, useUsersPod } from '../../../queries/usePodMembers.js';
 import { LogOut } from '../../../api/logout.js';
 
 function CustomTabPanel(props) {
@@ -30,9 +30,9 @@ function CustomTabPanel(props) {
     </div>
   );
 }
-function Card({title,description,peoples,image}){
+function Card({title,description,peoples,image,onClick}){
     return (
-        <div className='flex flex-row justify-between rounded-xl shadow-lg p-4 cursor-pointer'>
+        <div className='flex flex-row justify-between rounded-xl shadow-lg p-4 cursor-pointer' onClick={onClick}>
             <div className='flex flex-col gap-1'>
                 <div className='text-lg font-bold'>{title}</div>
                 <div className='text-sm'>{description}</div>
@@ -53,7 +53,8 @@ export default function MyPageUI() {
     const [isPodModalOpen, setIsPodModalOpen] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { data: podsData, isLoading: podLoading, isError: isPodError } = usePod(data?.user_id);
+    const { data: podsData, isLoading: podLoading, isError: isPodError } = usePodMe(data?.user_id);
+    const { data: myPodsData, isLoading: myPodsLoading, isError: isMyPodsError } = useUsersPod(data?.user_id);
 
     const handleOpenPodModal = () => {
             setIsPodModalOpen(true);
@@ -79,18 +80,10 @@ export default function MyPageUI() {
         await LogOut();
         navigate("/login");
     }
+    const handleClickPod = async(pod_id) => {
+        navigate(`/podDetail/${pod_id}`)
+    }
 
-    useEffect(()=>{
-        console.log("podsData");
-        console.log(podsData);
-    },[podsData])
-    useEffect(() => {
-        console.log(user?.user_id);
-    }, [user]);
-    useEffect(() => {
-        if (data)
-            setUser(data);
-    }, [data]);
     return(
         <div className="flex flex-col w-full gap-8">
             <div className="flex flex-row justify-between border-b-[#E9EBEE] border-b-[2px] p-6">
@@ -119,7 +112,56 @@ export default function MyPageUI() {
                     <Tab label="Joined Pods" style={{'text-transform': 'none'}}/>
                 </Tabs>
             </Box>
+            
             <CustomTabPanel value={value} index={0}>
+                {myPodsData?myPodsData.map((value,index)=>{
+                        return (<Card
+                        title={value.title}
+                        description={value.content}
+                        peoples={`${value.current_member}/${value.max_peoples}`}
+                        image={"Image"}
+                        onClick={()=>{handleClickPod(value.pod_id);}}
+                    />)
+                    }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>
+                        <div className='flex flex-col bg-[#F9FAFB] py-4 rounded-xl cursor-pointer'>
+                            <div className='flex flex-row justify-center'>
+                                <SizeComponent Component={AddCircleOutlineIcon} className={"text-[#9CA3AF]"} fontSize={48}/>                        
+                            </div>
+                            <div className='flex flex-col gap-5 text-[#888888]' onClick={handleOpenPodModal}>
+                                <div className='text-center'>아직 참여한 Pod이 없어요.</div>
+                                <div className='text-center'>새로운 Pod을 만들어 모임을 시작해보세요!</div>
+                                <div className='flex flex-row w-full justify-center'>
+                                    <div className='text-black font-bold bg-[#FFC107] text-center py-2 px-8 rounded-full'>새로운 Pod 만들기</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>}
+                    {podsData?<div className='flex flex-row w-full justify-center py-2 mt-4'>
+                                    <div className='text-black font-bold bg-[#FFC107] text-center py-2 px-8 rounded-full cursor-pointer' onClick={handleOpenPodModal}>새로운 Pod 만들기</div>
+                                </div>:<></>}
+                <div className='flex flex-col gap-4 p-4'>
+                    {/* <div className='flex flex-row justify-between'>
+                        <div className='text-xl font-semibold'>
+                            계정 설정
+                        </div>
+                        <KeyboardArrowRightIcon/>
+                    </div>
+                    <div className='flex flex-row justify-between'>
+                        <div className='text-xl font-semibold'>
+                            알림 설정
+                        </div>
+                        <KeyboardArrowRightIcon/>
+                    </div> */}
+                    <div className='flex flex-row justify-between text-[#EF3737] cursor-pointer' onClick={logOut}>
+                        <div className='text-xl font-semibold'>
+                            로그아웃
+                        </div>
+                        <LogoutIcon/>
+                    </div>
+                        
+                </div>
+            </CustomTabPanel>
+            <CustomTabPanel value={value} index={1}>
                 <div className='flex flex-col gap-2'>
                     {podsData?podsData.map((value,index)=>{
                         return (<Card
@@ -127,6 +169,7 @@ export default function MyPageUI() {
                         description={value.content}
                         peoples={`3/${value.max_peoples}`}
                         image={"Image"}
+                        onClick={()=>{handleClickPod(value.pod_id);}}
                     />)
                     }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>
                         <div className='flex flex-col bg-[#F9FAFB] py-4 rounded-xl cursor-pointer'>
@@ -142,12 +185,12 @@ export default function MyPageUI() {
                             </div>
                         </div>
                     </div>}
-                    {podsData?<div className='flex flex-row w-full justify-center py-2'>
+                    {podsData?<div className='flex flex-row w-full justify-center py-2 mt-4'>
                                     <div className='text-black font-bold bg-[#FFC107] text-center py-2 px-8 rounded-full cursor-pointer' onClick={handleOpenPodModal}>새로운 Pod 만들기</div>
                                 </div>:<></>}
                     
                     <div className='flex flex-col gap-4 p-4'>
-                        <div className='flex flex-row justify-between'>
+                        {/* <div className='flex flex-row justify-between'>
                             <div className='text-xl font-semibold'>
                                 계정 설정
                             </div>
@@ -158,7 +201,7 @@ export default function MyPageUI() {
                                 알림 설정
                             </div>
                             <KeyboardArrowRightIcon/>
-                        </div>
+                        </div> */}
                         <div className='flex flex-row justify-between text-[#EF3737] cursor-pointer' onClick={logOut}>
                             <div className='text-xl font-semibold'>
                                 로그아웃
@@ -168,20 +211,6 @@ export default function MyPageUI() {
                         
                     </div>
                 </div>
-            </CustomTabPanel>
-            <CustomTabPanel value={value} index={1}>
-                <Card
-                        title={"코딩 스터디 모집"}
-                        description={"카테고리: 스터디"}
-                        peoples={"참여 인원: 3/5"}
-                        image={"Image"}
-                    />
-                <Card
-                    title={"코딩 스터디 모집"}
-                    description={"카테고리: 스터디"}
-                    peoples={"참여 인원: 3/5"}
-                    image={"Image"}
-                />
             </CustomTabPanel>
             <AddPodContainer 
                 isOpen={isPodModalOpen}

@@ -23,13 +23,44 @@ class PodMemberQueryRepository:
         """사용자가 참가한 모든 Pod 조회"""
         with self.db.cursor() as cursor:
             sql = """
-                SELECT p.*, pm.joined_at, pm.amount
+                SELECT
+                    p.*,
+                    pm.joined_at,
+                    pm.amount,
+                    m.current_member
                 FROM Pod p
-                JOIN Pod_Member pm ON p.pod_id = pm.pod_id
-                WHERE pm.user_id = %s
-                ORDER BY p.event_time DESC
+                JOIN Pod_Member pm
+                    ON p.pod_id = pm.pod_id
+                    AND pm.user_id = %s
+                JOIN (
+                    SELECT pod_id, COUNT(*) AS current_member
+                    FROM Pod_Member
+                    GROUP BY pod_id
+                ) m
+                    ON m.pod_id = p.pod_id
+                ORDER BY p.event_time DESC;
             """
+            # current_member
             cursor.execute(sql, (user_id,))
+            return cursor.fetchall()
+    def find_pods_by_hostuser(self, host_user_id: int) -> List[Dict[str, Any]]:
+        """사용자가 생성한 모든 Pod 조회"""
+        with self.db.cursor() as cursor:
+            sql = """
+                SELECT
+                    p.*,
+                    COALESCE(m.current_member, 0) AS current_member
+                FROM Pod p
+                LEFT JOIN (
+                    SELECT pod_id, COUNT(*) AS current_member
+                    FROM Pod_Member
+                    GROUP BY pod_id
+                ) m
+                    ON m.pod_id = p.pod_id
+                WHERE p.host_user_id = %s
+                ORDER BY p.event_time DESC;
+            """
+            cursor.execute(sql, (host_user_id,))
             return cursor.fetchall()
     
     def is_member(self, pod_id: int, user_id: int) -> bool:

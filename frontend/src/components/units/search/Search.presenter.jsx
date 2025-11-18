@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
 export default function SearchPresenter({ query, setQuery, onSearch, orderBy , handleChange, pods, active, setActive }) {
+    const navigate = useNavigate();
     return (<div className="flex flex-col w-full min-h-screen bg-[#F6F7F8] min-w-96">
             {/* 헤더 */}
             <div className="flex flex-row justify-between p-4 bg-white shadow-sm">
@@ -65,7 +66,9 @@ export default function SearchPresenter({ query, setQuery, onSearch, orderBy , h
                         {pods&&pods.map((pod, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={() => onPodClick && onPodClick(idx + 1)}
+                                onClick={(e) => {console.log(pods[idx].pod_id);
+                                    navigate(`/podDetail/${pods[idx].pod_id}`)
+                                }}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
                                 <div className='bg-red-600 h-24 rounded-t-lg'></div>

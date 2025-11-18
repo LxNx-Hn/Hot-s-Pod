@@ -57,6 +57,14 @@ async def get_user_pods(
     """사용자가 참가한 Pod 목록"""
     return service.get_user_pods(user_id)
 
+@router.get("/host/{host_id}", response_model=List[dict])
+async def get_host_user_pods(
+    host_id: int,
+    service: PodMemberService = Depends(get_pod_member_service)
+):
+    """사용자가 생성한 Pod 목록"""
+    return service.get_user_hosted_pods(host_id)
+
 @router.get("/pod/{pod_id}/count", response_model=dict)
 async def get_member_count(
     pod_id: int,

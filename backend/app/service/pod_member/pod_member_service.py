@@ -29,6 +29,9 @@ class PodMemberService:
     def get_user_pods(self, user_id: int) -> List[dict]:
         """사용자가 참가한 Pod 목록"""
         return self.query_repo.find_pods_by_user(user_id)
+    def get_user_hosted_pods(self, user_id: int) -> List[dict]:
+        """사용자가 생성한 Pod 목록"""
+        return self.query_repo.find_pods_by_hostuser(user_id)
     
     def get_member_count(self, pod_id: int) -> int:
         """참가자 수"""

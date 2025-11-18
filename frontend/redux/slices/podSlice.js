@@ -5,22 +5,13 @@ const API_BASE = 'http://localhost:8000';
 
 // POD 목록 조회
 export const fetchPods = createAsyncThunk('pods/fetchPods', async () => {
-    const response = await axios.get(`${API_BASE}/pods/`, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`
-        }
-    });
+    const response = await axios.get(`${API_BASE}/pods/`, { withCredentials: true });
     return response.data;
 });
 
 // POD 생성
 export const createPod = createAsyncThunk('pods/createPod', async (podData) => {
-    const response = await axios.post(`${API_BASE}/pods/`, podData, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-            'Content-Type': 'application/json'
-        }
-    });
+    const response = await axios.post(`${API_BASE}/pods/`, podData, { withCredentials: true });
     return response.data;
 });
 

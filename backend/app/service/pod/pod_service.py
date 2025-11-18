@@ -1,7 +1,7 @@
 # app/service/pod/pod_service.py
 from app.repository.pod.pod_command_repository import PodCommandRepository
 from app.repository.pod.pod_query_repository import PodQueryRepository
-from app.schemas.pod import PodCreateRequest, PodResponse
+from app.schemas.pod import PodCreateRequest, PodResponse, PodDetailResponse
 from typing import Optional, List
 
 class PodService:
@@ -16,6 +16,11 @@ class PodService:
         pod_data = self.query_repo.find_pod_by_id(pod_id)
         if pod_data:
             return PodResponse(**pod_data)
+        return None
+    def get_podDetail(self, pod_id: int) -> Optional[PodDetailResponse]:
+        pod_data = self.query_repo.find_podDetail_by_id(pod_id)
+        if pod_data:
+            return PodDetailResponse(**pod_data)
         return None
     
     def list_all_pods(self, limit: int = 100, offset: int = 0) -> List[PodResponse]:

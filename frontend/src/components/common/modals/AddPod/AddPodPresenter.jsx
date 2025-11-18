@@ -4,13 +4,16 @@ import locale from "antd/locale/ko_KR";
 import { useEffect, useRef, useState } from "react";
 import KakaoMap from "./KakaoMap";
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
+import TestComp from "./SelectTree"
 import SizeComponent from "../../icon/SizeComponent";
+const { TextArea } = Input;
 export default function AddPodPresenter({
                                                  isOpen,
                                                  onClose,
                                                  form,
                                                  handleChange,
-                                                 handleCategories,
+                                                 handleDescriptionChange,
+                                                 handleCategory,
                                                  handleDateChange,
                                                  handleTimeChange,
                                                  handlePlaceChange,
@@ -27,6 +30,7 @@ export default function AddPodPresenter({
     const [selectedPlace, setSelectedPlace] = useState(null); // {lat, lng, address}
 
     const [mapOpen, setMapOpen] = useState(false);
+    const [select, setSelect] = useState();
 
     return (
         <Dialog
@@ -102,24 +106,30 @@ export default function AddPodPresenter({
                                     className="h-[45px] text-[16px] flex-1"
                                 />
                             </div>
-                            {field.error && <p className="text-red-500 text-sm mt-1 ml-[90px]">{field.error}</p>}
+                            {field.error && <p className="text-red-500 text-sm mt-1 w-full text-center">{field.error}</p>}
                         </div>
                     ))}
-
                     <div className="flex flex-col space-y-1">
-                            <div className="flex flex-col items-center space-x-2 w-full">
-                                <div className="text-black text-[16px] font-medium w-full">카테고리</div>
-                                <Input
-                                    name={"podCategory"}
-                                    value={form.categories.join(" ")}
-                                    onChange={handleCategories}
-                                    placeholder={"카테고리를 입력하세요"}
-                                    status={errors.categories ? "error" : ""}
-                                    className="h-[45px] text-[16px] flex-1"
-                                />
-                            </div>
-                            {errors.categories && <p className="text-red-500 text-sm mt-1 ml-[90px]">{errors.categories}</p>}
+                        <div className="flex flex-col items-center space-x-2 w-full">
+                            <div className="text-black text-[16px] font-medium w-full">설명</div>
+                            <TextArea placeholder="팟 설명을 작성해 주세요." allowClear onChange={handleDescriptionChange} value={form.podDescription} className={`${errors.podDescription?"border-1 border-[#EF4444]":""}`} />
                         </div>
+                        {errors.podDescription && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.podDescription}</p>}
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                        <div className="flex flex-col items-center space-x-2 w-full">
+                            <div className="text-black text-[16px] font-medium w-full">카테고리</div>
+                            <TestComp
+                                name={"podCategory"}
+                                value={form.category}
+                                onChange={handleCategory}
+                                placeholder={"카테고리를 입력하세요"}
+                                status={errors.category ? "error" : ""}
+                                className="h-[45px] text-[16px] flex-1"
+                                />
+                        </div>
+                        {errors.category && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.category}</p>}
+                    </div>
                     <div className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">
                             <div className="text-black text-[16px] font-medium w-full">날짜</div>
@@ -139,7 +149,7 @@ export default function AddPodPresenter({
                                 </ConfigProvider>
                             </div>
                         </div>
-                        {errors.openDate && <p className="text-red-500 text-sm mt-1 ml-[90px]">{errors.openDate}</p>}
+                        {errors.openDate && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.openDate}</p>}
                     </div>
                     <div className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">
@@ -159,7 +169,7 @@ export default function AddPodPresenter({
                                 </ConfigProvider>
                             </div>
                         </div>
-                        {errors.openTime && <p className="text-red-500 text-sm mt-1 ml-[90px]">{errors.openTime}</p>}
+                        {errors.openTime && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.openTime}</p>}
                     </div>
                     <div key={9} className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">
@@ -170,11 +180,11 @@ export default function AddPodPresenter({
                                 onChange={handleAddressChange}
                                 placeholder={"장소를 선택해주세요"}
                                 status={errors.place ? "error" : ""}
-                                className="h-[45px] text-[16px] flex-1"
+                                className={`${errors.selectedPlace?"border-1 border-[#EF4444] h-[45px] text-[16px] flex-1":"h-[45px] text-[16px] flex-1"}`}
                                 suffix={<SizeComponent Component={PlaceOutlinedIcon} fontSize={16} className={"text-[#BFBFBF]"} onClick={()=>{setMapOpen(true)}}/>}
                             />
                         </div>
-                        {errors.place && <p className="text-red-500 text-sm mt-1 ml-[90px]">{field.error}</p>}
+                        {errors.selectedPlace && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.selectedPlace}</p>}
                     </div>
 
                 </div>

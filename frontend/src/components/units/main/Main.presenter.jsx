@@ -81,7 +81,7 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                         {pods&&pods.map((pod, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={() => onPodClick && onPodClick(idx + 1)}
+                                onClick={() => onPodClick && onPodClick(pod.pod_id)}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
                                 <div className='bg-red-600 h-24 rounded-t-lg'></div>

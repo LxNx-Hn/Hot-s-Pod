@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../pages/main/index.jsx";
 import OAuthCallback from "../pages/oauth/callback.jsx";
-import ChatPage from "../pages/chat/index.jsx";
+import PodDetail from "../pages/podDetail/index.jsx";
 import LoginPage from "../pages/login/index.jsx";
 import MyPage from "../pages/myPage/index.jsx";
 import LayoutWrapper from "./components/common/layout/LayoutWrapper.jsx";
@@ -20,9 +20,9 @@ export default function App() {
         <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/myPage" element={<RequireAuth><MyPage/></RequireAuth>} />
         <Route path="/myPods" element={<RequireAuth><MyPods/></RequireAuth>} />
-        <Route path="/chat/:podId" element={
+        <Route path="/podDetail/:podId" element={
           <RequireAuth>
-            <ChatPage />
+            <PodDetail />
           </RequireAuth>
         } />
       </Routes>

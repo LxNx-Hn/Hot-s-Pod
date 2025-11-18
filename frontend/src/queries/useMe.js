@@ -1,12 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 async function fetchMe({ signal }) {
-  const res = await api.get("/users/me", { signal });
-  return res.data; // { user_id, username, ... }
+  try{
+    const res = await api.get("/users/me", { signal });
+    return res.data;
+  }
+  catch (e)
+  {
+    const navigate = useNavigate();
+    navigate("/login");
+  }
 }
 
 export function useMe() {
+  const navigate = useNavigate();
   return useQuery({
     queryKey: ["me"],
     queryFn: fetchMe,
@@ -17,5 +26,8 @@ export function useMe() {
     onSuccess: (data) => {
       alert("[useMe] /users/me =>", data);
     },
+    onError: (error) => {
+      navigate("/login");
+    }
   });
 }

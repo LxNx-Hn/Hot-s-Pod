@@ -11,7 +11,6 @@ export default function SearchContainer() {
     setOrderBy(event.target.value);
   };
 
-  // ✅ query, limit, offset이 바뀔 때마다 React Query가 자동으로 재요청
   const {
     data: podsData,
     isLoading: podsLoading,

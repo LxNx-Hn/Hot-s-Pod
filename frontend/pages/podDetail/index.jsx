@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchChatMessages, sendChatMessage } from "@redux/slices/chatSlice";
 import { useMe } from "../../src/queries/useMe"; // 로그인 사용자 정보 (쿠키 기반)
+import { usePodDetail } from "../../src/queries/usePods";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
@@ -17,7 +18,8 @@ export default function ChatPage() {
 
   // 로그인 사용자
   const { data: me, isLoading: meLoading, isError: meError } = useMe();
-
+  const [ podIdState, setPodIdState] = useState(podId?podId:null)
+  const { data: podDetail, isLoading: podDetailLoading, isError: podDetailError} = usePodDetail(podIdState);
   // Redux: 기존 메시지/로딩
   const { messages, loading } = useSelector((state) => state.chat);
 
@@ -129,14 +131,53 @@ export default function ChatPage() {
   };
 
   const allMessages = [...messages, ...wsMessages];
+  const zeroPadding = (number) => {
+    if(number<10)
+      return `0${number}`
+    return `${number}`
+  }
+  const date_toString = (date) => {
+    const newDate = new Date(date);
+    const weekDays = ["일","월","화","수","목","금","토"];
+    //요일 .getDay -> 0~6 > 일 ~ 토
+    var result = `${newDate.getFullYear()}.${zeroPadding(newDate.getMonth()+1)}.${zeroPadding(newDate.getDate())} ${weekDays[newDate.getDay()]}요일 ${zeroPadding(newDate.getHours())}:${zeroPadding(newDate.getMinutes())}:${zeroPadding(newDate.getSeconds())}`;
+    return result;
+  }
+  const time_delta_string = (string_time) => {
+    const createdAt = new Date(string_time);
+    const now = new Date();
+
+    const timeDelta = now.getTime() - createdAt.getTime();
+
+    const year_second = 3600*24*30*365;
+    const month_second = 3600*24*30;
+    const day_second = 3600*24;
+    const hour_second = 3600;
+    const minute_second = 3600;
+    if(timeDelta > year_second)
+      return `${Math.floor(timeDelta/year_second)}년 전`;
+    if(timeDelta > month_second)
+      return `${Math.floor(timeDelta/month_second)}개월 전`;
+    if(timeDelta > day_second)
+      return `${Math.floor(timeDelta/day_second)}일 전`;
+    if(timeDelta > hour_second)
+      return `${Math.floor(timeDelta/hour_second)}시간 전`;
+    if(timeDelta > minute_second)
+      return `${Math.floor(timeDelta/minute_second)}분 전`;
+    else
+      return `${Math.floor(timeDelta)}초 전`; 
+  }
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
-  if (meLoading || loading) {
+  if (meLoading || loading || podDetailLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-xl">Loading...</div>
       </div>
     );
+  }
+  else{
+    console.log(podDetail);
   }
   if (meError) {
     // 인증 실패 시 로그인 페이지로
@@ -156,55 +197,55 @@ export default function ChatPage() {
         <div></div>
       </div>
       <div className="flex flex-col gap-8 py-8">
-        <div className="text-3xl font-black">함께하는 주말 코딩 스터디</div>
+        <div className="text-3xl font-black">{podDetail.title}</div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2">
             <SizeComponent Component={PlaceOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
-            <div className="flex flex-col justify-center font-semibold">강남역 XYZ 카페</div>
+            <div className="flex flex-col justify-center font-semibold">{podDetail.place}</div>
           </div>
           <div className="flex flex-row gap-2">
             <SizeComponent Component={AccessTimeOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
-            <div className="flex flex-col justify-center font-semibold">매주 토요일 오후 2시~5시</div>
+            <div className="flex flex-col justify-center font-semibold">{date_toString(podDetail.event_time)}</div>
           </div>
           <div className="flex flex-row gap-2">
             <SizeComponent Component={PeopleAltOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
-            <div className="flex flex-col justify-center font-semibold">3/5</div>
+            <div className="flex flex-col justify-center font-semibold">{podDetail.current_member}/{podDetail.max_peoples}</div>
           </div>
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-col bg-white p-3 rounded-xl">
             <div className="font-bold text-xl">스터디 설명</div>
-            <div>이 스터디는 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구 어쩌구 저쩌구</div>
-            <br/>
-            <div>준비물 : 개인 노트북, 열정적인 마음!</div>
+            <p>{podDetail.content}</p>
           </div>
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-2">
-            <div className="font-bold text-xl">참여자(3)</div>
-            <div className="flex flex-row">
-              {["red","green","blue"].map((value,index)=>{
-                return(<div className={`w-16 h-16 bg-${value}-600 rounded-full mr-[-15px]`}></div>)
+            <div className="font-bold text-xl">참여자({podDetail.current_member})</div>
+            <div className="flex flex-row ml-3">
+              {podDetail.members.length==0?<></>:podDetail.members.map((value,index)=>{
+                return (<img className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value.profile_picture} />)
               })}
             </div>
           </div>
           <div className="flex flex-col gap-4 w-full pb-8">
             <div className="font-bold text-xl">댓글</div>
-            <div className="flex flex-col w-full">
-              <div className="flex flex-row gap-2 w-full">
-                <div className="w-8 h-8 rounded-full bg-red-600"></div>
+            <div className="flex flex-col w-full gap-2">
+              {podDetail.comments.length==0?<div className="w-full text-center">댓글이 없습니다.</div>:podDetail.comments.map((value,index)=>{
+                return (<div className="flex flex-row gap-2 w-full">
+                <img src={value.profile_picture} className="w-8 h-8 rounded-full"/>
                 <div className="flex flex-col p-2 bg-white rounded-md w-full">
                   <div className="flex flex-row justify-between">
-                    <div className="font-bold">김민준</div>
-                    <div className="text-xs text-[#888888]">2시간 전</div>
+                    <div className="font-bold">{value.username}</div>
+                    <div className="text-xs text-[#888888]">{time_delta_string(value.created_at)}</div>
                   </div>
-                  <p className="w-full">정말 기대되는 스터디네요! 혹시 스터디 전에 미리 읽어보면 좋을 자료가 있을까요?</p>
+                  <p className="w-full">{value.content}</p>
                 </div>
-              </div>
+              </div>)
+              })}
+              
             </div>
           </div>
         </div>
-
       </div>
       {/* 채팅 메시지 영역 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 hidden">
