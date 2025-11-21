@@ -4,7 +4,7 @@ import { TreeSelect } from 'antd';
 
 const treeData = [
   {
-    value: '선택하세요',
+    value: 0,
     title: '카테고리',
     children: [
       {

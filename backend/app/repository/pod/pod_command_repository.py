@@ -8,7 +8,7 @@ class PodCommandRepository:
         self.db = db
 
     def create_pod(self, pod_data: PodCreateRequest) -> int:
-        category_ids_json = json.dumps(pod_data.category_ids)
+        category_ids_json = json.dumps([0] + pod_data.category_ids)
         
         with self.db.cursor() as cursor:
             cursor.callproc('sp_CreatePod', (

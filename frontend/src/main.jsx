@@ -7,15 +7,19 @@ import { BrowserRouter } from "react-router-dom";
 import store from "../redux/store";
 import App from "./App";
 import "../styles/global.css";
+import { ConfigProvider } from "antd";
+import ko_KR from "antd/locale/ko_KR";
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
-  </Provider>
+  <ConfigProvider locale={ko_KR}>
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </Provider>
+  </ConfigProvider>
 );

@@ -1,16 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_BASE = 'http://localhost:8000';
+import { api } from "../../src/api/api";
 
 // 댓글 작성
 export const createComment = createAsyncThunk('comment/createComment', async (commentData) => {
-    const response = await axios.post(`${API_BASE}/comment/`, commentData, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-            'Content-Type': 'application/json'
-        }
-    });
+    const response = await api.post(`/comments/`, commentData, { withCredentials: true });
     return response.data;
 });
 

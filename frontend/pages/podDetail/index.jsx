@@ -11,6 +11,78 @@ import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SizeComponent from "../../src/components/common/icon/SizeComponent";
+import { createComment } from "@redux/slices/commentSlice.js";
+
+const getIndentClass = (level) => {
+  if (level === 0) return "";
+  if (level === 1) return "pl-4";
+  if (level === 2) return "pl-8";
+  return "pl-12"; // 3단계 이상은 고정
+};
+const time_delta_string = (string_time) => {
+    const createdAt = new Date(string_time);
+    const now = new Date();
+
+    const timeDelta = (now.getTime() - createdAt.getTime())/1000;
+
+    const year_second = 3600*24*30*365;
+    const month_second = 3600*24*30;
+    const day_second = 3600*24;
+    const hour_second = 3600;
+    const minute_second = 60;
+    if(timeDelta > year_second)
+      return `${Math.floor(timeDelta/year_second)}년 전`;
+    if(timeDelta > month_second)
+      return `${Math.floor(timeDelta/month_second)}개월 전`;
+    if(timeDelta > day_second)
+      return `${Math.floor(timeDelta/day_second)}일 전`;
+    if(timeDelta > hour_second)
+      return `${Math.floor(timeDelta/hour_second)}시간 전`;
+    if(timeDelta > minute_second)
+      return `${Math.floor(timeDelta/minute_second)}분 전`;
+    else
+      return `${Math.floor(timeDelta)}초 전`; 
+  }
+const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null }) => {
+  const indentClass = getIndentClass(level);
+
+  return (
+    <div
+      className={`flex flex-col gap-2 w-full ${indentClass}`}
+    >
+      
+      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"}`} onClick={()=>{setSelectedCommentId(comment.comment_id)}}>
+        <div className="flex flex-row justify-between">
+          <div className="flex flex-row gap-2">
+            <img
+              src={comment.profile_picture}
+              className="w-8 h-8 rounded-full"
+            />
+            <div className="font-bold flex flex-col justify-center">{comment.username}</div>
+          </div>
+          <div className="text-xs text-[#888888]">
+            {time_delta_string(comment.created_at)}
+          </div>
+        </div>
+        <p className="w-full">{comment.content}</p>
+      </div>
+      {/* 자식 댓글들 */}
+      {comment.children?.length > 0 && (
+        <div className="w-full flex flex-col gap-2">
+          {comment.children.map((child) => (
+            <CommentItem
+              key={child.comment_id}
+              comment={child}
+              setSelectedCommentId={setSelectedCommentId}
+              level={level + 1}
+              selectedId={selectedId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 export default function ChatPage() {
   const { podId } = useParams();
   const navigate = useNavigate();
@@ -23,6 +95,14 @@ export default function ChatPage() {
   // Redux: 기존 메시지/로딩
   const { messages, loading } = useSelector((state) => state.chat);
 
+  const [commentText, setCommentText] = useState("");
+  const [selectedCommentId, setSelectedCommentId] = useState(null);
+  const handleSelectedCommentId = (comment_id) => {
+    if(selectedCommentId==comment_id)
+      setSelectedCommentId(null);
+    else
+      setSelectedCommentId(comment_id);
+  }
   // 로컬 상태
   const [messageText, setMessageText] = useState("");
   const [wsMessages, setWsMessages] = useState([]);
@@ -48,6 +128,41 @@ export default function ChatPage() {
     // const host = "localhost:8000";
     return `${proto}://${host.replace(/:\d+$/, "")}:8000/ws/chat/${podId}`;
   }, [podId]);
+  const buildCommentTree = (comments) => {
+    const map = new Map();
+    comments.forEach(c => {
+      map.set(c.comment_id, { ...c, children: [] });
+    });
+
+    const roots = [];
+
+    map.forEach(node => {
+      if (node.parent_comment_id == null) {
+        roots.push(node);
+      } else {
+        const parent = map.get(node.parent_comment_id);
+        if (parent) {
+          parent.children.push(node);
+        } else {
+          // 부모 못 찾으면 그냥 루트 취급
+          roots.push(node);
+        }
+      }
+    });
+
+    return roots;
+  }
+  const [current_comments, setCurrentComments] = useState([]);
+
+  // podDetail 이 바뀔 때마다 한 번 동기화
+  useEffect(() => {
+    setCurrentComments(podDetail?.comments ?? []);
+  }, [podDetail?.comments]);
+
+  const commentTree = useMemo(
+    () => buildCommentTree(current_comments),
+    [current_comments]
+  );
 
   // 초기 로드 + WS 연결
   useEffect(() => {
@@ -129,6 +244,45 @@ export default function ChatPage() {
       handleSendMessage();
     }
   };
+  const addLocalComment = (content, parentCommentId = null) => {
+    const now = new Date().toISOString();
+
+    const newComment = {
+      comment_id: Date.now(),        // 임시 ID (백엔드에서 받은 걸 쓰는 게 베스트)
+      user_id: me.id,                // 로그인 유저 정보
+      username: me.username,
+      profile_picture: me.profile_picture,
+      content,
+      created_at: now,
+      parent_comment_id: parentCommentId,
+    };
+
+    setCurrentComments((prev) => [...prev, newComment]);
+  };
+  // 댓글 작성
+  const handleSendComment = async () => {
+    try {
+        await dispatch(createComment({
+          "pod_id":podId,
+          "user_id":me?.user_id,
+          "content":commentText,
+          "parent_comment_id":selectedCommentId
+        })).unwrap();
+        addLocalComment(commentText,selectedCommentId);
+        setCommentText("");
+    } catch (error) {
+        alert('댓글 생성에 실패했습니다: ' + error.message);
+    }
+    
+  };
+
+  // Enter 댓글 작성
+  const handleKeyDownComment = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendComment();
+    }
+  };
 
   const allMessages = [...messages, ...wsMessages];
   const zeroPadding = (number) => {
@@ -143,30 +297,7 @@ export default function ChatPage() {
     var result = `${newDate.getFullYear()}.${zeroPadding(newDate.getMonth()+1)}.${zeroPadding(newDate.getDate())} ${weekDays[newDate.getDay()]}요일 ${zeroPadding(newDate.getHours())}:${zeroPadding(newDate.getMinutes())}:${zeroPadding(newDate.getSeconds())}`;
     return result;
   }
-  const time_delta_string = (string_time) => {
-    const createdAt = new Date(string_time);
-    const now = new Date();
-
-    const timeDelta = now.getTime() - createdAt.getTime();
-
-    const year_second = 3600*24*30*365;
-    const month_second = 3600*24*30;
-    const day_second = 3600*24;
-    const hour_second = 3600;
-    const minute_second = 3600;
-    if(timeDelta > year_second)
-      return `${Math.floor(timeDelta/year_second)}년 전`;
-    if(timeDelta > month_second)
-      return `${Math.floor(timeDelta/month_second)}개월 전`;
-    if(timeDelta > day_second)
-      return `${Math.floor(timeDelta/day_second)}일 전`;
-    if(timeDelta > hour_second)
-      return `${Math.floor(timeDelta/hour_second)}시간 전`;
-    if(timeDelta > minute_second)
-      return `${Math.floor(timeDelta/minute_second)}분 전`;
-    else
-      return `${Math.floor(timeDelta)}초 전`; 
-  }
+  
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
   if (meLoading || loading || podDetailLoading) {
@@ -213,8 +344,8 @@ export default function ChatPage() {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <div className="flex flex-col bg-white p-3 rounded-xl">
-            <div className="font-bold text-xl">스터디 설명</div>
+          <div className="flex flex-col bg-white p-3 rounded-xl gap-2">
+            <div className="font-bold text-xl">설명</div>
             <p>{podDetail.content}</p>
           </div>
         </div>
@@ -230,18 +361,14 @@ export default function ChatPage() {
           <div className="flex flex-col gap-4 w-full pb-8">
             <div className="font-bold text-xl">댓글</div>
             <div className="flex flex-col w-full gap-2">
-              {podDetail.comments.length==0?<div className="w-full text-center">댓글이 없습니다.</div>:podDetail.comments.map((value,index)=>{
-                return (<div className="flex flex-row gap-2 w-full">
-                <img src={value.profile_picture} className="w-8 h-8 rounded-full"/>
-                <div className="flex flex-col p-2 bg-white rounded-md w-full">
-                  <div className="flex flex-row justify-between">
-                    <div className="font-bold">{value.username}</div>
-                    <div className="text-xs text-[#888888]">{time_delta_string(value.created_at)}</div>
-                  </div>
-                  <p className="w-full">{value.content}</p>
-                </div>
-              </div>)
-              })}
+              
+                {commentTree.length === 0 ? (
+                  <div className="w-full text-center">댓글이 없습니다.</div>
+                ) : (
+                  commentTree.map((comment) => (
+                    <CommentItem key={comment.comment_id} comment={comment} setSelectedCommentId={handleSelectedCommentId} selectedId={selectedCommentId} />
+                  ))
+                )}
               
             </div>
           </div>
@@ -277,17 +404,15 @@ export default function ChatPage() {
         <div className="flex flex-row gap-2 w-full">
           <input
             type="text"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onSubmit={(e) => {
-              console.log("전송 ",e.target.value);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onSubmit={(e) => {console.log("전송 ",e.target.value);}}
+            onKeyDown={handleKeyDownComment}
+            placeholder="댓글을 입력하세요..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="flex flex-col justify-center">
-            <SizeComponent Component={KeyboardArrowUpIcon} onClick={handleSendMessage} className=" bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors" fontSize={32}/>
+            <SizeComponent Component={KeyboardArrowUpIcon} onClick={handleSendComment} className=" bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors" fontSize={32}/>
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ export default function Main() {
     const [selectedCategory,setSelectedCategory] = useState(0); 
     const [isPodModalOpen, setIsPodModalOpen] = useState(false);
     const { data, isLoading, isError } = useMe();
-    const [limit,setLimit] = useState(10);
+    const [limit,setLimit] = useState(30);
     const [offset,setOffset] = useState(0);
     const { data:podsData, isLoading:isPodsLoading, isError:isPodsError } = usePods({limit,offset});
     const [open, setOpen] = useState(false);

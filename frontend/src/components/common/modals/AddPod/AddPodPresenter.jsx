@@ -6,6 +6,10 @@ import KakaoMap from "./KakaoMap";
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import TestComp from "./SelectTree"
 import SizeComponent from "../../icon/SizeComponent";
+import dayjs from "dayjs";
+import "dayjs/locale/ko";
+dayjs.locale("ko");
+
 const { TextArea } = Input;
 export default function AddPodPresenter({
                                                  isOpen,
@@ -136,11 +140,12 @@ export default function AddPodPresenter({
                             <div className="w-full">
                                 <ConfigProvider locale={locale}>
                                     <DatePicker
+                                        locale={locale}
                                         value={form.openDate}
                                         onChange={handleDateChange}
                                         format="YYYY-MM-DD"
                                         placeholder="날짜 선택"
-                                        status={errors.openDate ? "error" : ""}
+                                        status={errors.openDate||errors.openDateTime ? "error" : ""}
                                         className="h-[45px] w-full"
                                         getPopupContainer={(trigger) => trigger.parentElement}
                                         open={isDatePickerOpen}
@@ -150,6 +155,7 @@ export default function AddPodPresenter({
                             </div>
                         </div>
                         {errors.openDate && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.openDate}</p>}
+                        {errors.openDateTime && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.openDateTime}</p>}
                     </div>
                     <div className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">
@@ -160,7 +166,7 @@ export default function AddPodPresenter({
                                         value={form.openTime}
                                         onChange={handleTimeChange}
                                         placeholder="시간 선택"
-                                        status={errors.openTime ? "error" : ""}
+                                        status={errors.openTime||errors.openDateTime ? "error" : ""}
                                         className="h-[45px] w-full"
                                         getPopupContainer={(trigger) => trigger.parentElement}
                                         open={isTimePickerOpen}
@@ -170,6 +176,7 @@ export default function AddPodPresenter({
                             </div>
                         </div>
                         {errors.openTime && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.openTime}</p>}
+                        {errors.openDateTime && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.openDateTime}</p>}
                     </div>
                     <div key={9} className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">

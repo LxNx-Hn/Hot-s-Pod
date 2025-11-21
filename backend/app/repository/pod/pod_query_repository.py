@@ -110,16 +110,25 @@ class PodQueryRepository:
     def find_all_pods(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             sql = """
-            SELECT 
-                p.*, 
+            SELECT
+                p.*,
                 u.username AS host_username,
-                COUNT(pm.user_id) AS current_member
-                FROM Pod p
-                JOIN User u ON p.host_user_id = u.user_id
-                LEFT JOIN Pod_Member pm ON p.pod_id = pm.pod_id
-                GROUP BY p.pod_id
-                ORDER BY p.event_time DESC
-                LIMIT %s OFFSET %s
+                COALESCE(pmAgg.current_member, 0) AS current_member,
+                clAgg.category_ids
+            FROM Pod p
+            JOIN User u ON p.host_user_id = u.user_id
+            LEFT JOIN (
+                SELECT pod_id, COUNT(*) AS current_member
+                FROM Pod_Member
+                GROUP BY pod_id
+            ) pmAgg ON pmAgg.pod_id = p.pod_id
+            LEFT JOIN (
+                SELECT pod_id, JSON_ARRAYAGG(category_id) AS category_ids
+                FROM CategoryLink
+                GROUP BY pod_id
+            ) clAgg ON clAgg.pod_id = p.pod_id
+            ORDER BY p.event_time DESC
+            LIMIT %s OFFSET %s;
             """
             cursor.execute(sql, (limit, offset))
             return cursor.fetchall()

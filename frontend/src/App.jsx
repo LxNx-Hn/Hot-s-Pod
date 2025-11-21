@@ -25,6 +25,7 @@ export default function App() {
             <PodDetail />
           </RequireAuth>
         } />
+
       </Routes>
     </div>
   );

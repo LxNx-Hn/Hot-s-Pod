@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import AddPodContainer from "../../common/modals/AddPod/AddPodContainer.jsx";
 import { usePodMe, useUsersPod } from '../../../queries/usePodMembers.js';
 import { LogOut } from '../../../api/logout.js';
+import { createPod, fetchPods } from "@redux/slices/podSlice.js";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -167,7 +168,7 @@ export default function MyPageUI() {
                         return (<Card
                         title={value.title}
                         description={value.content}
-                        peoples={`3/${value.max_peoples}`}
+                        peoples={`${value.current_member}/${value.max_peoples}`}
                         image={"Image"}
                         onClick={()=>{handleClickPod(value.pod_id);}}
                     />)
