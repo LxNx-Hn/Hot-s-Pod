@@ -19,9 +19,9 @@ def main():
         return
     
     try:
-        # DB 연결 (DB 이름 명시)
+        # DB 연결
         connection = pymysql.connect(
-            host=os.getenv("DATABASE_HOST", "127.0.0.1"),
+            host=os.getenv("DATABASE_HOST", "localhost"),
             port=int(os.getenv("DATABASE_PORT", 3306)),
             user="root",
             password="rladlgus0625@",
