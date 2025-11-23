@@ -4,7 +4,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchChatMessages, sendChatMessage } from "@redux/slices/chatSlice";
 import { useMe } from "../../src/queries/useMe"; // 로그인 사용자 정보 (쿠키 기반)
+import { useMessage } from "../../src/queries/useMessage";
 import { usePodDetail } from "../../src/queries/usePods";
+import { joinPod } from "../../src/queries/usePodJoin";
+import { leavePod } from "../../src/queries/usePodLeave";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
@@ -91,12 +94,13 @@ export default function ChatPage() {
   // 로그인 사용자
   const { data: me, isLoading: meLoading, isError: meError } = useMe();
   const [ podIdState, setPodIdState] = useState(podId?podId:null)
-  const { data: podDetail, isLoading: podDetailLoading, isError: podDetailError} = usePodDetail(podIdState);
-  // Redux: 기존 메시지/로딩
-  const { messages, loading } = useSelector((state) => state.chat);
+  const { data: podDetail, isLoading: podDetailLoading, isError: podDetailError, refetch: refetchPodDetail} = usePodDetail(podIdState);
+  const { data: messages, isLoading: messageLoading, isError: isMessageError, refetch: refetchMessages } = useMessage(podIdState);
 
   const [commentText, setCommentText] = useState("");
   const [selectedCommentId, setSelectedCommentId] = useState(null);
+  const [isMyPod, setIsMyPod] = useState(false);
+  const [isChatOpened, setIsChatOpened] = useState(false);
   const handleSelectedCommentId = (comment_id) => {
     if(selectedCommentId==comment_id)
       setSelectedCommentId(null);
@@ -106,6 +110,7 @@ export default function ChatPage() {
   // 로컬 상태
   const [messageText, setMessageText] = useState("");
   const [wsMessages, setWsMessages] = useState([]);
+  const [allMessages, setAllMessages] = useState(messages)
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -113,9 +118,24 @@ export default function ChatPage() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  const isInMe = () => {
+    if(!podDetail)
+      return false;
+    for(let i = 0 ; i < podDetail.members.length ; i++)
+    {
+      if(podDetail.members[i].user_id == me.user_id)
+        return true;
+    }
+    return false;
+  }
   useEffect(() => {
     scrollToBottom();
+    console.log(messages);
+    console.log(wsMessages);
   }, [messages, wsMessages]);
+  useEffect(()=>{
+    setIsMyPod(isInMe());
+  },[podDetail,podDetail?.members,me])
 
   // WebSocket URL (http→ws, https→wss)
   const wsUrl = useMemo(() => {
@@ -218,6 +238,8 @@ export default function ChatPage() {
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(
           JSON.stringify({
+            type:"user",
+            pod_id: parseInt(podId, 10),
             content: messageText,
             user_id: me?.user_id ?? 0, // 로그인 유저 ID
           })
@@ -226,12 +248,15 @@ export default function ChatPage() {
         // 2) WS가 닫혀 있으면 REST fallback
         await dispatch(
           sendChatMessage({
+            type:"user",
             pod_id: parseInt(podId, 10),
+            user_id: me?.user_id ?? 0,
             message: messageText,
           })
         ).unwrap();
       }
       setMessageText("");
+      refetchMessages();
     } catch (error) {
       alert("메시지 전송 실패: " + (error?.message || "unknown error"));
     }
@@ -284,7 +309,6 @@ export default function ChatPage() {
     }
   };
 
-  const allMessages = [...messages, ...wsMessages];
   const zeroPadding = (number) => {
     if(number<10)
       return `0${number}`
@@ -297,10 +321,34 @@ export default function ChatPage() {
     var result = `${newDate.getFullYear()}.${zeroPadding(newDate.getMonth()+1)}.${zeroPadding(newDate.getDate())} ${weekDays[newDate.getDay()]}요일 ${zeroPadding(newDate.getHours())}:${zeroPadding(newDate.getMinutes())}:${zeroPadding(newDate.getSeconds())}`;
     return result;
   }
+  const joinPodFunc = async() => {
+    try{
+      if(me)
+      {
+        await joinPod({"user_id":me.user_id,"pod_id":podId,"amount":1,"place_start":"","place_end":""});
+        refetchPodDetail();
+      }
+    }
+    catch(e)
+    {
+      alert("팟 참여에 실패했습니다.")
+    }
+  }
+  const leavePodFunc = async() => {
+    try{
+      if(me)
+        await leavePod(me.user_id,podId);
+        refetchPodDetail();
+    }
+    catch(e)
+    {
+      alert("팟 나가기 실패")
+    }
+  }
   
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
-  if (meLoading || loading || podDetailLoading) {
+  if (meLoading || messageLoading || podDetailLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-xl">Loading...</div>
@@ -308,7 +356,7 @@ export default function ChatPage() {
     );
   }
   else{
-    console.log(podDetail);
+    console.log(messages);
   }
   if (meError) {
     // 인증 실패 시 로그인 페이지로
@@ -375,30 +423,79 @@ export default function ChatPage() {
         </div>
       </div>
       {/* 채팅 메시지 영역 */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 hidden">
-        {allMessages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10">첫 메시지를 보내보세요!</div>
-        ) : (
-          allMessages.map((msg, idx) => (
-            <div key={idx} className="flex flex-col">
-              <div className="bg-white rounded-lg p-3 shadow-sm max-w-md">
-                <div className="text-xs text-gray-500 mb-1">
-                  User #{msg.user_id ?? "-"} ·{" "}
-                  {msg.time
-                    ? new Date(msg.time).toLocaleString("ko-KR")
-                    : msg.timestamp
-                    ? new Date(msg.timestamp).toLocaleString("ko-KR")
-                    : "방금"}
+      <div className={`fixed left-0 top-0 bg-black bg-opacity-50 w-full h-full ${isChatOpened?"":"hidden"}`}>
+        
+        <div className="flex flex-col justify-between h-full">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {[...(messages?messages:[]), ...(wsMessages?wsMessages:[])].length === 0 ? (
+              <div className="text-center text-gray-500 mt-10">첫 메시지를 보내보세요!</div>
+            ) : (
+              [...(messages?messages:[]), ...(wsMessages?wsMessages:[])].map((msg, idx) => (
+                <div key={idx} className="flex flex-col">
+                  {msg.type=="system"?<div className={`flex flex-row w-full`}>
+                    <div className="w-full text-center flex flex-row justify-center">
+                      <div className="flex flex-col">
+                        <div className="bg-white rounded-lg px-4 py-1 shadow-sm text-xs text-gray-500 mb-1">
+                          {msg.time
+                            ? new Date(msg.time).toLocaleString("ko-KR")
+                            : msg.timestamp
+                            ? new Date(msg.timestamp).toLocaleString("ko-KR")
+                            : "방금"}
+                        </div>
+                        <div className="flex flex-row w-ful justify-center">
+                          <div className="bg-white rounded-lg px-2 py-1 shadow-sm w-fit text-sm whitespace-pre-wrap break-words">
+                            {msg.content ?? msg.message}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>:<div className={`flex flex-row w-full justify-${msg.user_id==me.user_id?'end':'start'}`}>
+                    <div className="bg-white rounded-lg p-3 shadow-sm max-w-md">
+                      <div className="text-xs text-gray-500 mb-1">
+                        {msg.username ?? "-"} · {" "}
+                        {msg.time
+                          ? new Date(msg.time).toLocaleString("ko-KR")
+                          : msg.timestamp
+                          ? new Date(msg.timestamp).toLocaleString("ko-KR")
+                          : "방금"}
+                      </div>
+                      <div className="text-sm whitespace-pre-wrap break-words">
+                        {msg.content ?? msg.message}
+                      </div>
+                    </div>
+                  </div>}
+                  
                 </div>
-                <div className="text-sm whitespace-pre-wrap break-words">
-                  {msg.content ?? msg.message}
-                </div>
-              </div>
+              ))
+            )}
+            {/* <div ref={messagesEndRef} /> */}
+          </div>
+          <div className="p-4 shadow-lg">
+            <div className="flex flex-row gap-2">
+              <input
+                type="text"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onSubmit={(e) => {
+                  console.log("전송 ",e.target.value);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="메시지를 입력하세요..."
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+              <button
+                onClick={handleSendMessage}
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+              >
+                전송
+              </button>
+              <button className="p-2 px-4 bg-red-500 text-white rounded-lg transition-colors text-sm" onClick={()=>{setIsChatOpened(false)}}>X</button>
             </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
+          </div>
+
+        </div>
       </div>
+      
       {/* 입력 영역 */}
       <div className="w-full">
         <div className="flex flex-row gap-2 w-full">
@@ -417,36 +514,24 @@ export default function ChatPage() {
         </div>
       </div>
       <div className="w-full flex flex-col justify-center py-4">
-        <div
-            className="w-full flex flex-row justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer"
-            onClick={()=>{}}
-        >
-          참여하기
+        <div className="flex flex-row w-full gap-2">
+          {isMyPod?<div
+              className="flex flex-row w-3/4 justify-center bg-red-500 font-bold text-white py-2 rounded-xl cursor-pointer"
+              onClick={leavePodFunc}
+          >
+            나가기
+          </div>:<div
+              className="flex flex-row w-3/4 justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer"
+              onClick={joinPodFunc}
+          >
+            참여하기
+          </div>}
+          <div className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" onClick={()=>{setIsChatOpened(true)}}>채팅 열기</div>
         </div>
+        
       </div>
 
-      {/* 입력 영역 */}
-      <div className="bg-white p-4 shadow-lg hidden">
-        <div className="flex flex-row gap-2">
-          <input
-            type="text"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onSubmit={(e) => {
-              console.log("전송 ",e.target.value);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSendMessage}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            전송
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 }

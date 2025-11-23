@@ -11,6 +11,23 @@ class PodMemberCommandRepository:
         """Pod 참가"""
         with self.db.cursor() as cursor:
             sql = """
+                    SELECT 
+                        p.pod_id,
+                        COUNT(u.user_id) AS current_peoples,
+                        p.max_peoples
+                    FROM Pod p
+                    LEFT JOIN Pod_Member pm 
+                        ON pm.pod_id = p.pod_id
+                    LEFT JOIN User u 
+                        ON u.user_id = pm.user_id
+                    WHERE p.pod_id = %s
+                    GROUP BY p.max_peoples;
+                """
+            cursor.execute(sql, (join_data.pod_id))
+            data = cursor.fetchone()
+            if data['current_peoples'] + 1 > data['max_peoples']:
+                raise ValueError("Pod is Already Fulled")
+            sql = """
                 INSERT INTO Pod_Member (user_id, pod_id, amount, place_start, place_end)
                 VALUES (%s, %s, %s, %s, %s)
             """

@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/api";
 
-async function createPod(payload) {
-  const { data } = await api.post("/pods", payload);
+export async function joinPod(payload) {
+  const { data } = await api.post("/pod-members/join", payload);
   return data;
 }
 
-export function useCreatePod() {
+export function useJoinPod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createPod,
+    mutationFn: joinPod,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pods"] });
     },

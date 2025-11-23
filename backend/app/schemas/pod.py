@@ -48,6 +48,22 @@ class PodResponse(BaseModel):
     host_username: Optional[str] = None
     class Config:
         from_attributes = True
+class PodListResponse(BaseModel):
+    pod_id: int
+    host_user_id: int
+    event_time: datetime
+    place: str
+    title: str
+    content: Optional[str]
+    min_peoples: int
+    max_peoples: int
+    current_member: int
+    created_at: datetime
+    updated_at: datetime
+    host_username: Optional[str] = None
+    category_ids: List[int] = None
+    class Config:
+        from_attributes = True
 class PodDetailResponse(BaseModel):
     pod_id: int
     host_user_id: int

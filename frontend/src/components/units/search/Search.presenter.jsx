@@ -8,11 +8,15 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
+import { imageData } from "../../../data/categories.js";
 export default function SearchPresenter({ query, setQuery, onSearch, orderBy , handleChange, pods, active, setActive }) {
     const navigate = useNavigate();
+    useEffect(()=>{
+        console.log(pods);
+    },[pods])
     return (<div className="flex flex-col w-full min-h-screen bg-[#F6F7F8] min-w-96">
             {/* 헤더 */}
             <div className="flex flex-row justify-between p-4 bg-white shadow-sm">
@@ -71,7 +75,7 @@ export default function SearchPresenter({ query, setQuery, onSearch, orderBy , h
                                 }}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
-                                <div className='bg-red-600 h-24 rounded-t-lg'></div>
+                                <img className='h-24 rounded-t-lg w-full' src={imageData[pod&&pod.category_ids?pod.category_ids[0]:0]}/>
                                 <div className='flex flex-col gap-1 p-3'>
                                     <div className="font-bold text-lg truncate">{pod.title}</div>
                                     <div className="text-[#888888] text-xs">{pod.content}</div>

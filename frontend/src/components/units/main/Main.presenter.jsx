@@ -11,17 +11,11 @@ import Select from '@mui/material/Select';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
-
+import { treeData } from "../../../data/categories.js";
+import { imageData } from "../../../data/categories.js";
 export default function MainUI({categories, selectedCategory, setSelectedCategory, orderBy, handleChange, pods, onOpenPodModal, onPodClick}) {
     const navigate = useNavigate();
     const [active, setActive] = useState(0);
-    const get_img_by_category = (category) => {
-        const category_images = [
-            "https://cdn.pixabay.com/photo/2022/11/08/02/27/track-7577525_1280.jpg", //러닝
-            "https://cdn.pixabay.com/photo/2022/04/09/15/10/basketball-7121617_1280.jpg",//농구
-        ];
-        return category_images[category];
-    }
     return (
         <div className="flex flex-col w-full min-h-screen bg-[#F6F7F8] min-w-96">
             <div className="fixed bottom-28 right-10 w-10 h-10 rounded-full bg-[#FF7A5A] cursor-pointer" onClick={()=>{onOpenPodModal()}}>
@@ -91,7 +85,7 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                                 onClick={() => onPodClick && onPodClick(pod.pod_id)}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
-                                <img className='h-24 rounded-t-lg w-full' src={"https://cdn.pixabay.com/photo/2022/11/08/02/27/track-7577525_1280.jpg"}/>
+                                <img className='h-24 rounded-t-lg w-full' src={imageData[pod&&pod.category_ids?pod.category_ids[0]:0]}/>
                                 <div className='flex flex-col gap-1 p-3'>
                                     <div className="font-bold text-lg truncate">{pod.title}</div>
                                     <div className="text-[#888888] text-xs">{pod.content}</div>

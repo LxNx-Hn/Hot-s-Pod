@@ -18,10 +18,14 @@ const searchPods = async ({ query, limit = 20, offset = 0 }) => {
     return;
   }
 };
+
 const fetchPodDetail = async (pod_id) => {
   const res = await api.get(`/pods/detail/${pod_id}`);
   return res.data;
 }
+
+
+
 export function usePods({ limit, offset }) {
   return useQuery({
     queryKey: ["pods", { limit, offset }],

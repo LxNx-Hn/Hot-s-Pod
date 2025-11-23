@@ -5,7 +5,7 @@ from app.database import get_db_connection
 from app.repository.pod.pod_command_repository import PodCommandRepository
 from app.repository.pod.pod_query_repository import PodQueryRepository
 from app.service.pod.pod_service import PodService
-from app.schemas.pod import PodCreateRequest, PodResponse, PodDetailResponse
+from app.schemas.pod import PodCreateRequest, PodResponse, PodDetailResponse, PodListResponse
 from typing import List
 
 router = APIRouter(prefix="/pods", tags=["Pods"])
@@ -31,7 +31,7 @@ async def create_pod(
 
 
 
-@router.get("/search", response_model=List[PodResponse])
+@router.get("/search", response_model=List[PodListResponse])
 async def get_pod(
     query: str,
     limit: int = Query(100, ge=1, le=1000),
@@ -53,7 +53,7 @@ async def get_pod(
     if not pod:
         raise HTTPException(status_code=404, detail="Pod not found")
     return pod
-@router.get("/", response_model=List[PodResponse])
+@router.get("/", response_model=List[PodListResponse])
 async def list_pods(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),

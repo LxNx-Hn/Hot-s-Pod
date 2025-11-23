@@ -131,30 +131,57 @@ class PodQueryRepository:
             LIMIT %s OFFSET %s;
             """
             cursor.execute(sql, (limit, offset))
-            return cursor.fetchall()
+            response = cursor.fetchall()
+            for i in response:
+                i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []
+            return response
     def find_pods_by_query(self, query, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             sql = """
             SELECT 
-                p.*, 
+                p.*,
                 u.username AS host_username,
-                COUNT(DISTINCT pm.user_id) AS current_member
-                FROM Pod p
-                JOIN User u ON p.host_user_id = u.user_id
-                LEFT JOIN Pod_Member pm ON p.pod_id = pm.pod_id
-                LEFT JOIN CategoryLink cl ON p.pod_id = cl.pod_id
-                LEFT JOIN Category c ON cl.category_id = c.category_id
-                WHERE
-                    p.title LIKE %s
-                OR
-                    p.content LIKE %s
-                OR
-                    p.place LIKE %s
-                OR
-                    c.category_name LIKE %s
-                GROUP BY p.pod_id
-                ORDER BY p.event_time DESC
-                LIMIT %s OFFSET %s
+                (
+                    SELECT COUNT(DISTINCT pm.user_id)
+                    FROM Pod_Member pm
+                    WHERE pm.pod_id = p.pod_id
+                ) AS current_member,
+                COALESCE(
+                    (
+                        SELECT JSON_ARRAYAGG(sub.category_id)
+                        FROM (
+                            SELECT DISTINCT c2.category_id
+                            FROM CategoryLink cl2
+                            JOIN Category c2 
+                                ON c2.category_id = cl2.category_id
+                            WHERE cl2.pod_id = p.pod_id
+                        ) AS sub
+                    ),
+                    JSON_ARRAY()
+                ) AS category_ids
+
+            FROM Pod p
+            JOIN User u 
+                ON p.host_user_id = u.user_id
+
+            WHERE
+                p.title   LIKE %s
+            OR p.content LIKE %s
+            OR p.place   LIKE %s
+            OR EXISTS (
+                    SELECT 1
+                    FROM CategoryLink cl3
+                    JOIN Category c3 
+                        ON c3.category_id = cl3.category_id
+                    WHERE cl3.pod_id = p.pod_id
+                    AND c3.category_name LIKE %s
+            )
+
+            ORDER BY p.event_time DESC
+            LIMIT %s OFFSET %s;
             """
             cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
-            return cursor.fetchall()
+            response = cursor.fetchall()
+            for i in response:
+                i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []
+            return response
