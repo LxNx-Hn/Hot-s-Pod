@@ -8,10 +8,9 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
-import { treeData } from "../../../data/categories.js";
 import { imageData } from "../../../data/categories.js";
 export default function MainUI({categories, selectedCategory, setSelectedCategory, orderBy, handleChange, pods, onOpenPodModal, onPodClick}) {
     const navigate = useNavigate();
@@ -51,11 +50,6 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                         <input type='text' placeholder='관심사, 지역, 키워드로 검색해보세요.' className='min-w-80 p-2'/>
                     </div>
                 </div>
-                <div className='flex flex-row w-full overflow-x-scroll scrollbar-hide gap-2 max-w-[100vw]'>
-                    {categories.map((value, index)=>{
-                        return (<div key={index} className={`p-2 px-4 rounded-full bg-[${index==selectedCategory?"#FF7A5A":"#FFFFFF"}] text-[${index==selectedCategory?"#FFFFFF":"#000000"}] min-w-fit cursor-pointer ${index==selectedCategory?"font-bold":"font-semibold"}`} onClick={()=>{setSelectedCategory(index);}}>{value}</div>)
-                    })}
-                </div>
                 <div className="flex flex-row justify-end w-full">
                     <div className='w-32'>
                         <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
@@ -93,7 +87,7 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                                         <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
                                         {Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
                                         <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>:
-                                        <div className='text-[#FDC862] text-xs font-semibold'>D{Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)) < 0 ? `+${Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}` : `-${Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}`}</div>
+                                        <div className='text-[#FDC862] text-xs font-semibold'>D{Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)) < 0 ? `+${Math.abs(Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)))}` : `-${Math.abs(Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)))}`}</div>
                                         }
                                     </div>
                                     <div className='flex flex-row gap-1'>

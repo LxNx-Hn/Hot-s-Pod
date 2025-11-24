@@ -1,25 +1,47 @@
 import SearchPresenter from "./Search.presenter";
 import { useEffect, useState, useMemo } from "react";
 import { usePodSearch } from "../../../queries/usePods";
+import { fetchRAG } from "../../../queries/useRAG";
+import { useMe } from "../../../queries/useMe";
+import { useNavigate } from "react-router-dom";
 
 export default function SearchContainer() {
+  const navigate = useNavigate();
+  const { data, isLoading, isError } = useMe();
   const [query, setQuery] = useState("");
   const [orderBy, setOrderBy] = useState("최신순");
   const [active, setActive] = useState(1);
+  const [isRAGOpened, setIsRAGOpened] = useState(false);
+  const [RAGquery, setRAGquery] = useState("");
+  const [RAGMessages,setRAGMessages] = useState([]);
+  
+  const onSendRAG = async() => {
+    if(RAGquery==="")
+      return;
+    setRAGMessages([...RAGMessages,{llm_answer:'me',content:RAGquery}])
+    const response = await fetchRAG({
+            user_id:data.user_id,
+            query:RAGquery
+        });
+    setRAGMessages([...RAGMessages,{llm_answer:'me',content:RAGquery},response]);
+  };
 
   const handleChange = (event) => {
     setOrderBy(event.target.value);
   };
+  useEffect(()=>{
+    console.log(RAGMessages);
+  },[RAGMessages])
 
   const {
     data: podsData,
     isLoading: podsLoading,
     isError: podsError,
+    // refetch
   } = usePodSearch({ query, limit: 100, offset: 0 });
 
-  // onSearch는 굳이 안 써도 됨 (입력 바뀔 때마다 바로 검색하고 싶으면)
   const onSearch = () => {
-    // 예: 나중에 "검색 버튼 눌렀을 때만" 보내고 싶을 때 debounce 등 넣을 수도 있음
+    // refetch();
   };
   useEffect(()=>{
     console.log(query)
@@ -54,6 +76,13 @@ export default function SearchContainer() {
       query={query}
       setQuery={setQuery}
       onSearch={onSearch}
+      isRAGOpened={isRAGOpened}
+      setIsRAGOpened={setIsRAGOpened}
+      RAGquery={RAGquery}
+      setRAGquery={setRAGquery}
+      onSendRAG={onSendRAG}
+      RAGMessages={RAGMessages}
+      setRAGMessages={setRAGMessages}
       orderBy={orderBy}
       handleChange={handleChange}
       pods={sortedPods}
