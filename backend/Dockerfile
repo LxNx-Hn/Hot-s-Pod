@@ -1,5 +1,4 @@
 # Hot's POD Backend Dockerfile
-FROM python:3.11-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -29,6 +28,8 @@ RUN mkdir -p /app/chroma_db_data
 
 # 포트 8000 노출
 EXPOSE 8000
+
+RUN echo '#!/bin/bash
 
 # 환경변수 설정
 ENV PYTHONUNBUFFERED=1
