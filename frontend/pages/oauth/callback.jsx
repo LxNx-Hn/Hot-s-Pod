@@ -24,11 +24,14 @@ export default function OAuthCallback() {
   }, [navigate, dispatch, qc]);
 
   return (
-    <div className="w-full h-full bg-red-600">
+    <div className="w-full h-full bg-gradient-to-br from-orange-50 to-teal-50">
         <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-            <div className="text-xl font-bold mb-4">로그인 처리 중...</div>
-            <div className="text-gray-500">잠시만 기다려주세요.</div>
+        <div className="text-center bg-white p-8 rounded-2xl shadow-lg">
+            <div className="text-2xl font-bold mb-4 text-gray-800">로그인 처리 중</div>
+            <div className="text-gray-600">잠시만 기다려주세요...</div>
+            <div className="mt-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+            </div>
         </div>
         </div>
     </div>

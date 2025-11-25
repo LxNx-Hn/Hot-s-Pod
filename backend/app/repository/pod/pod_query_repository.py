@@ -119,12 +119,12 @@ class PodQueryRepository:
             JOIN user u ON p.host_user_id = u.user_id
             LEFT JOIN (
                 SELECT pod_id, COUNT(*) AS current_member
-                FROM Pod_Member
+                FROM pod_member
                 GROUP BY pod_id
             ) pmAgg ON pmAgg.pod_id = p.pod_id
             LEFT JOIN (
                 SELECT pod_id, JSON_ARRAYAGG(category_id) AS category_ids
-                FROM CategoryLink
+                FROM categorylink
                 GROUP BY pod_id
             ) clAgg ON clAgg.pod_id = p.pod_id
             ORDER BY p.event_time DESC
