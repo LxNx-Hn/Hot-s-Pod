@@ -11,13 +11,13 @@ export default function KakaoMap({ onSelect }) {
   }, [onSelect]);
 
   useEffect(() => {
-    const initMap = () => {
+    const initMap = (lat, lng) => {
       if (!window.kakao || !containerRef.current) return;
       const { kakao } = window;
 
       kakao.maps.load(() => {
         const map = new kakao.maps.Map(containerRef.current, {
-          center: new kakao.maps.LatLng(37.5665, 126.9780), // 최초 중심(서울)
+          center: new kakao.maps.LatLng(lat, lng),
           level: 3,
         });
 
@@ -53,9 +53,28 @@ export default function KakaoMap({ onSelect }) {
       });
     };
 
+    const startMap = () => {
+      // 현위치 가져오기
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            initMap(lat, lng);
+          },
+          (error) => {
+            console.warn("Geolocation error:", error);
+            initMap(37.5665, 126.9780); // 실패 시 서울
+          }
+        );
+      } else {
+        initMap(37.5665, 126.9780); // Geolocation 미지원 시 서울
+      }
+    };
+
     // 이미 kakao가 로드돼 있으면 바로 초기화
     if (window.kakao && window.kakao.maps) {
-      initMap();
+      startMap();
     } else {
       // 아직이면 script load 기다렸다가 실행
       const script = document.querySelector(
@@ -63,7 +82,7 @@ export default function KakaoMap({ onSelect }) {
       );
       if (!script) return;
 
-      const onLoad = () => initMap();
+      const onLoad = () => startMap();
       script.addEventListener("load", onLoad);
 
       return () => {
