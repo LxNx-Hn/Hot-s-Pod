@@ -12,20 +12,22 @@ def main():
     
     print("경고: 데이터베이스를 초기화하려고 합니다!")
     print(f"대상 DB: {os.getenv('DATABASE_NAME', 'hots_pod_db')}")
-    confirm = input("정말로 계속하시겠습니까? (yes/no): ")
     
-    if confirm.lower() != 'yes':
-        print("취소되었습니다.")
-        return
+    # 환경변수 INIT_DB가 true면 자동 실행 (Docker용)
+    if os.getenv('INIT_DB', '').lower() != 'true':
+        confirm = input("정말로 계속하시겠습니까? (yes/no): ")
+        if confirm.lower() != 'yes':
+            print("취소되었습니다.")
+            return
     
     try:
         # DB 연결
         connection = pymysql.connect(
-            host=os.getenv("DATABASE_HOST", "localhost"),
-            port=int(os.getenv("DATABASE_PORT", 3306)),
-            user="root",
-            password="rladlgus0625@",
-            db=os.getenv("DATABASE_NAME", "hots_pod_db"),  # DB 명시
+            host=os.getenv("DATABASE_HOST", "127.0.0.1"),
+            port=int(os.getenv("DATABASE_PORT", "3306")),
+            user=os.getenv("DATABASE_USER"),
+            password=os.getenv("DATABASE_PASSWORD"),
+            db=os.getenv("DATABASE_NAME", "hots_pod_db"),
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )

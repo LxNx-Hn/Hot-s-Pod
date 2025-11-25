@@ -11,8 +11,8 @@ class PodQueryRepository:
         with self.db.cursor() as cursor:
             sql = """
                 SELECT p.*, u.username AS host_username
-                FROM Pod p
-                JOIN User u ON p.host_user_id = u.user_id
+                FROM pod p
+                JOIN user u ON p.host_user_id = u.user_id
                 WHERE p.pod_id = %s
             """
             cursor.execute(sql, (pod_id,))
@@ -28,9 +28,9 @@ class PodQueryRepository:
                 catAgg.categories,
                 pmAgg.members,
                 COUNT(pm.user_id) AS current_member
-            FROM Pod p
-            JOIN User u ON p.host_user_id = u.user_id
-            LEFT JOIN Pod_Member pm ON p.pod_id = pm.pod_id
+            FROM pod p
+            JOIN user u ON p.host_user_id = u.user_id
+            LEFT JOIN pod_member pm ON p.pod_id = pm.pod_id
 
             LEFT JOIN (
                 SELECT
@@ -46,8 +46,8 @@ class PodQueryRepository:
                             'created_at',         c.created_at
                         )
                     ) AS comments
-                FROM Comment c
-                JOIN User cu
+                FROM comment c
+                JOIN user cu
                     ON cu.user_id = c.user_id
                 LEFT JOIN kakaoapi ka
                     ON ka.user_id = c.user_id
@@ -82,8 +82,8 @@ class PodQueryRepository:
                             'joined_at',       pm2.joined_at
                         )
                     ) AS members
-                FROM Pod_Member pm2
-                JOIN User u2
+                FROM pod_member pm2
+                JOIN user u2
                     ON u2.user_id = pm2.user_id
                 LEFT JOIN kakaoapi ka2
                     ON ka2.user_id = pm2.user_id
@@ -115,8 +115,8 @@ class PodQueryRepository:
                 u.username AS host_username,
                 COALESCE(pmAgg.current_member, 0) AS current_member,
                 clAgg.category_ids
-            FROM Pod p
-            JOIN User u ON p.host_user_id = u.user_id
+            FROM pod p
+            JOIN user u ON p.host_user_id = u.user_id
             LEFT JOIN (
                 SELECT pod_id, COUNT(*) AS current_member
                 FROM Pod_Member
@@ -143,7 +143,7 @@ class PodQueryRepository:
                 u.username AS host_username,
                 (
                     SELECT COUNT(DISTINCT pm.user_id)
-                    FROM Pod_Member pm
+                    FROM pod_member pm
                     WHERE pm.pod_id = p.pod_id
                 ) AS current_member,
                 COALESCE(
@@ -151,8 +151,8 @@ class PodQueryRepository:
                         SELECT JSON_ARRAYAGG(sub.category_id)
                         FROM (
                             SELECT DISTINCT c2.category_id
-                            FROM CategoryLink cl2
-                            JOIN Category c2 
+                            FROM categorylink cl2
+                            JOIN category c2 
                                 ON c2.category_id = cl2.category_id
                             WHERE cl2.pod_id = p.pod_id
                         ) AS sub
@@ -160,8 +160,8 @@ class PodQueryRepository:
                     JSON_ARRAY()
                 ) AS category_ids
 
-            FROM Pod p
-            JOIN User u 
+            FROM pod p
+            JOIN user u 
                 ON p.host_user_id = u.user_id
 
             WHERE
@@ -170,8 +170,8 @@ class PodQueryRepository:
             OR p.place   LIKE %s
             OR EXISTS (
                     SELECT 1
-                    FROM CategoryLink cl3
-                    JOIN Category c3 
+                    FROM categorylink cl3
+                    JOIN category c3 
                         ON c3.category_id = cl3.category_id
                     WHERE cl3.pod_id = p.pod_id
                     AND c3.category_name LIKE %s

@@ -16,7 +16,7 @@ class OAuthCommandRepository:
     ) -> None:
         with self.db.cursor() as cursor:
             sql = """
-                INSERT INTO KakaoAPI 
+                INSERT INTO kakaoapi 
                     (k_id, user_id, access_token, refresh_token, user_name, profile_picture)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE

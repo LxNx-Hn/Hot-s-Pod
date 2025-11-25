@@ -11,8 +11,8 @@ from datetime import timedelta
 from app.utils.cookies import set_access_cookie, set_refresh_cookie, clear_auth_cookies
 
 
-SAMESITE = "Lax"    # 프론트/백 다른 도메인이면 "None"
-SECURE   = True     # 로컬 http 개발만 일시적으로 False
+SAMESITE = "None"   # 프론트/백 다른 도메인이므로 "None" 필수
+SECURE   = True     # HTTPS 환경이므로 True
 router = APIRouter(prefix='/oauth', tags=['OAuth'])
 # 어우씨 여기 하나도 모르겠다 ㅋㅋㅋ
 @router.get("/kakao/login")
@@ -22,6 +22,7 @@ async def kakao_login():
         f"?client_id={settings.KAKAO_REST_API_KEY}"
         f"&redirect_uri={settings.KAKAO_REDIRECT_URI}"
         f"&response_type=code"
+        f"&prompt=none"  # 이미 로그인되어 있으면 자동 인증
     )
     return RedirectResponse(url=kakao_auth_url)
 @router.get("/kakao/callback")

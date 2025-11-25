@@ -31,7 +31,7 @@ class PodCommandRepository:
     def join_pod(self, pod_id: int, user_id: int) -> bool:
         with self.db.cursor() as cursor:
             try:
-                sql = "INSERT INTO Pod_Member (user_id, pod_id) VALUES (%s, %s)"
+                sql = "INSERT INTO pod_member (user_id, pod_id) VALUES (%s, %s)"
                 cursor.execute(sql, (user_id, pod_id))
                 self.db.commit()
                 return True

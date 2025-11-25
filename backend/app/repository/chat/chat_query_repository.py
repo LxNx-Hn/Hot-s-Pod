@@ -17,8 +17,8 @@ class ChatQueryRepository:
             if before_chat_id:
                 sql = """
                     SELECT c.*, u.username
-                    FROM Chat c
-                    JOIN User u ON c.user_id = u.user_id
+                    FROM chat c
+                    JOIN user u ON c.user_id = u.user_id
                     WHERE c.pod_id = %s AND c.chat_id < %s
                     ORDER BY c.time DESC
                     LIMIT %s
@@ -27,8 +27,8 @@ class ChatQueryRepository:
             else:
                 sql = """
                     SELECT c.*, u.username
-                    FROM Chat c
-                    JOIN User u ON c.user_id = u.user_id
+                    FROM chat c
+                    JOIN user u ON c.user_id = u.user_id
                     WHERE c.pod_id = %s
                     ORDER BY c.time DESC
                     LIMIT %s
