@@ -24,6 +24,13 @@ jobs:
         run: |
           pwd
           ls -la
+          if [ -d "Backend" ]; then
+            echo "Backend directory found"
+            ls -la Backend/
+          else
+            echo "Backend directory not found"
+            exit 1
+          fi
        
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -35,7 +42,7 @@ jobs:
       - name: Build backend Docker image
         run: |
           IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest" | tr '[:upper:]' '[:lower:]')
-          docker build -t "$IMAGE_NAME_LOWER" -f ./Backend/Dockerfile ./Backend
+          docker build -t "$IMAGE_NAME_LOWER" -f Backend/Dockerfile Backend/
           docker push "$IMAGE_NAME_LOWER"
 
   deploy-backend-runpod:
