@@ -1,6 +1,6 @@
 import SearchPresenter from "./Search.presenter";
 import { useEffect, useState, useMemo } from "react";
-import { usePodSearch } from "../../../queries/usePods";
+import { usePodSearch, usePods } from "../../../queries/usePods";
 import { fetchRAG } from "../../../queries/useRAG";
 import { useMe } from "../../../queries/useMe";
 import { useNavigate } from "react-router-dom";
@@ -33,11 +33,19 @@ export default function SearchContainer() {
     console.log(RAGMessages);
   },[RAGMessages])
 
+
+  // 검색어가 없을 때 전체 팟 목록을 가져옴
+  const {
+    data: allPodsData,
+    isLoading: allPodsLoading,
+    isError: allPodsError,
+  } = usePods({ limit: 100, offset: 0 });
+
+  // 검색어가 있을 때만 검색 API 사용
   const {
     data: podsData,
     isLoading: podsLoading,
     isError: podsError,
-    // refetch
   } = usePodSearch({ query, limit: 100, offset: 0 });
 
   const onSearch = () => {
@@ -46,30 +54,20 @@ export default function SearchContainer() {
   useEffect(()=>{
     console.log(query)
   },[query])
+  // 검색어가 있으면 검색 결과, 없으면 전체 목록
   const sortedPods = useMemo(() => {
-    if (!podsData) return [];
-
-    const arr = [...podsData];
-
+    const podsList = query.trim().length > 0 ? podsData : allPodsData;
+    if (!podsList) return [];
+    const arr = [...podsList];
     if (orderBy === "최신순") {
-        // created_at 최신순 (내림차순)
-        arr.sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
+      arr.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (orderBy === "업데이트순") {
-        // updated_at 최신순 (내림차순)
-        arr.sort(
-            (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-        );
+      arr.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
     } else if (orderBy === "마감임박순") {
-        // event_time이 가장 가까운 순서 (마감 임박)
-        arr.sort(
-            (a, b) => new Date(a.event_time) - new Date(b.event_time)
-        );
+      arr.sort((a, b) => new Date(a.event_time) - new Date(b.event_time));
     }
-
-        return arr;
-    }, [podsData, orderBy]);
+    return arr;
+  }, [query, podsData, allPodsData, orderBy]);
 
   return (
     <SearchPresenter
