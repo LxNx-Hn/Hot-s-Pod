@@ -61,18 +61,44 @@ jobs:
           RUNPOD_API_BASE="https://rest.runpod.io/v1/pods"
           POD_ID="${{ secrets.RUNPOD_BACKEND_POD_ID }}"
           
-          # 1. 팟 중지
-          echo "Stopping pod..."
-          curl -s --request POST \
+          # 1. 현재 팟 상태 확인
+          echo "Checking current pod status..."
+          CURRENT_STATUS=$(curl -s \
             --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
-            "$RUNPOD_API_BASE/$POD_ID/stop"
+            "$RUNPOD_API_BASE/$POD_ID")
+          echo "Current status: $CURRENT_STATUS"
           
+          # 2. 팟 중지
+          echo "Stopping pod..."
+          STOP_RESPONSE=$(curl -s --request POST \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            "$RUNPOD_API_BASE/$POD_ID/stop")
+          echo "Stop response: $STOP_RESPONSE"
+          
+          # 3. 중지 상태 확인 (최대 60초 대기)
           echo "Waiting for pod to stop..."
-          sleep 30
+          for i in {1..12}; do
+            sleep 5
+            STATUS_JSON=$(curl -s \
+              --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+              "$RUNPOD_API_BASE/$POD_ID")
+            
+            DESIRED_STATUS=$(echo "$STATUS_JSON" | jq -r '.desiredStatus // "unknown"')
+            echo "Attempt $i: desiredStatus=$DESIRED_STATUS"
+            
+            if [ "$DESIRED_STATUS" = "EXITED" ] || [ "$DESIRED_STATUS" = "STOPPED" ]; then
+              echo "Pod stopped successfully"
+              break
+            fi
+            
+            if [ $i -eq 12 ]; then
+              echo "Warning: Pod may not have stopped completely, continuing anyway..."
+            fi
+          done
           
-          # 2. 팟 업데이트
+          # 4. 팟 업데이트
           echo "Updating pod configuration..."
-          curl -s --request PATCH \
+          UPDATE_RESPONSE=$(curl -s --request PATCH \
             --url "$RUNPOD_API_BASE/$POD_ID" \
             --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
             --header "Content-Type: application/json" \
@@ -98,15 +124,54 @@ jobs:
               },
               \"volumeInGb\": 50,
               \"volumeMountPath\": \"/workspace\"
-            }"
+            }")
+          echo "Update response: $UPDATE_RESPONSE"
           
-          echo "Waiting after update..."
-          sleep 10
+          # 5. 업데이트 성공 여부 확인
+          if echo "$UPDATE_RESPONSE" | jq -e '.id // .podId' > /dev/null; then
+            echo "Pod updated successfully"
+          else
+            echo "Error: Pod update may have failed"
+            echo "Response: $UPDATE_RESPONSE"
+          fi
           
-          # 3. 팟 재시작
+          # 6. 팟 재시작
           echo "Starting pod..."
-          curl -s --request POST \
+          START_RESPONSE=$(curl -s --request POST \
             --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
-            "$RUNPOD_API_BASE/$POD_ID/start"
+            "$RUNPOD_API_BASE/$POD_ID/start")
+          echo "Start response: $START_RESPONSE"
           
-          echo "✅ Deployment completed!"
+          # 7. 시작 상태 확인
+          echo "Waiting for pod to start..."
+          for i in {1..24}; do
+            sleep 5
+            STATUS_JSON=$(curl -s \
+              --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+              "$RUNPOD_API_BASE/$POD_ID")
+            
+            DESIRED_STATUS=$(echo "$STATUS_JSON" | jq -r '.desiredStatus // "unknown"')
+            echo "Attempt $i: desiredStatus=$DESIRED_STATUS"
+            
+            if [ "$DESIRED_STATUS" = "RUNNING" ]; then
+              echo "Pod started successfully"
+              
+              POD_URL=$(echo "$STATUS_JSON" | jq -r '.runtime.ports[0].publicUrl // "N/A"')
+              echo "Pod URL: $POD_URL"
+              break
+            fi
+            
+            if [ $i -eq 24 ]; then
+              echo "Warning: Pod may not have started properly"
+              echo "Final status: $STATUS_JSON"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Deployment completed successfully!"
+          
+          # 8. 최종 상태 출력
+          echo "Final pod information:"
+          curl -s \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            "$RUNPOD_API_BASE/$POD_ID" | jq '.'
