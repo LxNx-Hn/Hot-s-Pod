@@ -15,6 +15,8 @@ import AddPodContainer from "../../common/modals/AddPod/AddPodContainer.jsx";
 import { usePodMe, useUsersPod } from '../../../queries/usePodMembers.js';
 import { LogOut } from '../../../api/logout.js';
 import { createPod, fetchPods } from "@redux/slices/podSlice.js";
+import { imageData } from "../../../data/categories.js";
+
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -40,7 +42,7 @@ function Card({title,description,peoples,image,onClick}){
                 <div className='text-sm text-[#888888]'>참여 인원: {peoples}</div>
             </div>
             <div className='flex flex-col justify-center'>
-                {image}
+                <img className='h-24 rounded-t-lg w-36' src={image}/>
             </div>
         </div>
     )
@@ -84,6 +86,9 @@ export default function MyPageUI() {
     const handleClickPod = async(pod_id) => {
         navigate(`/podDetail/${pod_id}`)
     }
+    useEffect(()=>{
+        console.log(myPodsData);
+    },[myPodsData])
 
     return(
         <div className="flex flex-col w-full gap-8">
@@ -120,7 +125,7 @@ export default function MyPageUI() {
                         title={value.title}
                         description={value.content}
                         peoples={`${value.current_member}/${value.max_peoples}`}
-                        image={"Image"}
+                        image={imageData[value&&value.category_ids?value.category_ids[0]:0]}
                         onClick={()=>{handleClickPod(value.pod_id);}}
                     />)
                     }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>
@@ -169,7 +174,7 @@ export default function MyPageUI() {
                         title={value.title}
                         description={value.content}
                         peoples={`${value.current_member}/${value.max_peoples}`}
-                        image={"Image"}
+                        image={imageData[value&&value.category_ids?value.category_ids[0]:0]}
                         onClick={()=>{handleClickPod(value.pod_id);}}
                     />)
                     }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>

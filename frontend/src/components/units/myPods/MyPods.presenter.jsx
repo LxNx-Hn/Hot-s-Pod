@@ -11,6 +11,8 @@ import Select from '@mui/material/Select';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
+import { imageData } from "../../../data/categories.js";
+
 export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPodClick,pods}) {
     const navigate = useNavigate();
     const [active, setActive] = useState(2);
@@ -70,7 +72,7 @@ export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPod
                                 onClick={() => onPodClick && onPodClick(idx + 1)}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
-                                <div className='bg-red-600 h-24 rounded-t-lg'></div>
+                                <img className='w-full h-24 rounded-t-lg' src={imageData[pod&&pod.category_ids?pod.category_ids[0]:0]}/>
                                 <div className='flex flex-col gap-1 p-3'>
                                     <div className="font-bold text-lg truncate">{pod.title}</div>
                                     <div className="text-[#888888] text-xs">{pod.content}</div>

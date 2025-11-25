@@ -1,6 +1,7 @@
 # app/repository/pod_member/pod_member_query_repository.py
 from pymysql.connections import Connection
 from typing import List, Dict, Any
+import json
 
 class PodMemberQueryRepository:
     def __init__(self, db: Connection):
@@ -27,29 +28,45 @@ class PodMemberQueryRepository:
                     p.*,
                     pm.joined_at,
                     pm.amount,
-                    m.current_member
+                    m.current_member,
+                    catAgg.categories AS 'category_ids'
                 FROM Pod p
                 JOIN Pod_Member pm
                     ON p.pod_id = pm.pod_id
-                    AND pm.user_id = %s
+                AND pm.user_id = %s
                 JOIN (
                     SELECT pod_id, COUNT(*) AS current_member
                     FROM Pod_Member
                     GROUP BY pod_id
                 ) m
                     ON m.pod_id = p.pod_id
+                LEFT JOIN (
+                    SELECT
+                        pc.pod_id,
+                        JSON_ARRAYAGG(
+                            c.category_id
+                        ) AS categories
+                    FROM categorylink pc
+                    JOIN Category c
+                    ON c.category_id = pc.category_id
+                    GROUP BY pc.pod_id
+                ) catAgg
+                    ON catAgg.pod_id = p.pod_id
                 ORDER BY p.event_time DESC;
             """
-            # current_member
             cursor.execute(sql, (user_id,))
-            return cursor.fetchall()
+            response = cursor.fetchall()
+            for i in response:
+                i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []
+            return response
     def find_pods_by_hostuser(self, host_user_id: int) -> List[Dict[str, Any]]:
         """사용자가 생성한 모든 Pod 조회"""
         with self.db.cursor() as cursor:
             sql = """
                 SELECT
                     p.*,
-                    COALESCE(m.current_member, 0) AS current_member
+                    COALESCE(m.current_member, 0) AS current_member,
+                    catAgg.categories AS 'category_ids'
                 FROM Pod p
                 LEFT JOIN (
                     SELECT pod_id, COUNT(*) AS current_member
@@ -57,11 +74,26 @@ class PodMemberQueryRepository:
                     GROUP BY pod_id
                 ) m
                     ON m.pod_id = p.pod_id
+                LEFT JOIN (
+                    SELECT
+                        pc.pod_id,
+                        JSON_ARRAYAGG(
+                            c.category_id
+                        ) AS categories
+                    FROM categorylink pc
+                    JOIN Category c
+                    ON c.category_id = pc.category_id
+                    GROUP BY pc.pod_id
+                ) catAgg
+                    ON catAgg.pod_id = p.pod_id
                 WHERE p.host_user_id = %s
                 ORDER BY p.event_time DESC;
             """
             cursor.execute(sql, (host_user_id,))
-            return cursor.fetchall()
+            response = cursor.fetchall()
+            for i in response:
+                i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []
+            return response
     
     def is_member(self, pod_id: int, user_id: int) -> bool:
         """사용자가 Pod 참가자인지 확인"""
