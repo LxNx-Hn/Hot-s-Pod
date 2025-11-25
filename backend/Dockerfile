@@ -70,6 +70,6 @@ fi\n\
 echo "Starting uvicorn server..."\n\
 exec uvicorn main:app --host 0.0.0.0 --port 8000' > /app/start.sh && \
     chmod +x /app/start.sh
-
+RUN sed -i '2i\
 # 시작 스크립트 실행
 CMD ["/bin/bash", "/app/start.sh"]
