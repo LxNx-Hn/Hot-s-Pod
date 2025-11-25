@@ -62,6 +62,16 @@ async def list_pods(
     """Pod 목록 조회"""
     return pod_service.list_all_pods(limit, offset)
 
+
+@router.get("", response_model=List[PodListResponse])
+async def list_pods_no_slash(
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    pod_service: PodService = Depends(get_pod_service)
+):
+    """Pod 목록 조회 (no trailing slash) - `/pods` 요청 대응"""
+    return pod_service.list_all_pods(limit, offset)
+
 @router.post("/{pod_id}/join", response_model=dict)
 async def join_pod(
     pod_id: int,
