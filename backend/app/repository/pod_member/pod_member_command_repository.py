@@ -15,10 +15,10 @@ class PodMemberCommandRepository:
                         p.pod_id,
                         COUNT(u.user_id) AS current_peoples,
                         p.max_peoples
-                    FROM Pod p
-                    LEFT JOIN Pod_Member pm 
+                    FROM pod p
+                    LEFT JOIN pod_member pm 
                         ON pm.pod_id = p.pod_id
-                    LEFT JOIN User u 
+                    LEFT JOIN user u 
                         ON u.user_id = pm.user_id
                     WHERE p.pod_id = %s
                     GROUP BY p.max_peoples;
@@ -28,7 +28,7 @@ class PodMemberCommandRepository:
             if data['current_peoples'] + 1 > data['max_peoples']:
                 raise ValueError("Pod is Already Fulled")
             sql = """
-                INSERT INTO Pod_Member (user_id, pod_id, amount, place_start, place_end)
+                INSERT INTO pod_member (user_id, pod_id, amount, place_start, place_end)
                 VALUES (%s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
@@ -44,7 +44,7 @@ class PodMemberCommandRepository:
     def leave_pod(self, pod_id: int, user_id: int) -> bool:
         """Pod 탈퇴"""
         with self.db.cursor() as cursor:
-            sql = "DELETE FROM Pod_Member WHERE pod_id = %s AND user_id = %s"
+            sql = "DELETE FROM pod_member WHERE pod_id = %s AND user_id = %s"
             cursor.execute(sql, (pod_id, user_id))
             self.db.commit()
             return cursor.rowcount > 0
@@ -75,7 +75,7 @@ class PodMemberCommandRepository:
             if not set_clauses:
                 return False
             params.extend([pod_id, user_id])
-            sql = "UPDATE Pod_Member SET " + ", ".join(set_clauses) + " WHERE pod_id = %s AND user_id = %s"
+            sql = "UPDATE pod_member SET " + ", ".join(set_clauses) + " WHERE pod_id = %s AND user_id = %s"
             cursor.execute(sql, params)
             self.db.commit()
             return cursor.rowcount > 0
