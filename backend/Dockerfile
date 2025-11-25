@@ -29,8 +29,6 @@ RUN mkdir -p /app/chroma_db_data
 # 포트 8000 노출
 EXPOSE 8000
 
-RUN echo '#!/bin/bash
-
 # 환경변수 설정
 ENV PYTHONUNBUFFERED=1
 ENV NVIDIA_VISIBLE_DEVICES=all
@@ -41,35 +39,39 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # 시작 스크립트 생성
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "Starting Hot'\''s POD Backend..."\n\
-echo "Database: $DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"\n\
-\n\
-RUN echo '#!/bin/bash\n\
-# MariaDB 시작\n\
-echo "Starting MariaDB..."\n\
-service mariadb start\n\
-sleep 5\n\
-\n\
-# MariaDB 초기 설정\n\
-echo "Configuring MariaDB..."\n\
-mysql -u root <<-EOSQL\n\
-    ALTER USER '\''root'\''@'\''localhost'\'' IDENTIFIED BY '\''${DATABASE_PASSWORD}'\'';\n\
-    CREATE DATABASE IF NOT EXISTS ${DATABASE_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n\
-    CREATE USER IF NOT EXISTS '\''${DATABASE_USER}'\''@'\''%'\'' IDENTIFIED BY '\''${DATABASE_PASSWORD}'\'';\n\
-    GRANT ALL PRIVILEGES ON ${DATABASE_NAME}.* TO '\''${DATABASE_USER}'\''@'\''%'\'';\n\
-    FLUSH PRIVILEGES;\n\
-EOSQL\n\
-\n\
-# DB 초기화 (필요시)\n\
-if [ "$INIT_DB" = "true" ]; then\n\
-  echo "Initializing database schema..."\n\
-  python init_db.py\n\
-fi\n\
-\n\
-echo "Starting uvicorn server..."\n\
+RUN echo '#!/bin/bash
+set -e
+# .env 파일이 존재하면 환경변수로 export
+if [ -f "/app/.env" ]; then
+  export $(grep -v "^#" /app/.env | xargs)
+fi
+
+echo "Starting Hot'\''s POD Backend..."
+echo "Database: $DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
+
+# MariaDB 시작
+echo "Starting MariaDB..."
+service mariadb start
+sleep 5
+
+# MariaDB 초기 설정
+echo "Configuring MariaDB..."
+mysql -u root <<-EOSQL
+    ALTER USER '\''root'\''@'\''localhost'\'' IDENTIFIED BY '\''${DATABASE_PASSWORD}'\'';
+    CREATE DATABASE IF NOT EXISTS ${DATABASE_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE USER IF NOT EXISTS '\''${DATABASE_USER}'\''@'\''%'\'' IDENTIFIED BY '\''${DATABASE_PASSWORD}'\'';
+    GRANT ALL PRIVILEGES ON ${DATABASE_NAME}.* TO '\''${DATABASE_USER}'\''@'\''%'\'';
+    FLUSH PRIVILEGES;
+EOSQL
+
+# DB 초기화 (필요시)
+if [ "$INIT_DB" = "true" ]; then
+  echo "Initializing database schema..."
+  python init_db.py
+fi
+
+echo "Starting uvicorn server..."
 exec uvicorn main:app --host 0.0.0.0 --port 8000' > /app/start.sh && \
     chmod +x /app/start.sh
-# 시작 스크립트 실행
+
+CMD ["/bin/bash", "/app/start.sh"]
