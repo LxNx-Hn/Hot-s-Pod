@@ -33,8 +33,7 @@ export default function LoginUI() {
                             소모임을 위한 플랫폼입니다.
                         </div>
                     </div>
-                    <div className="flex flex-row justify-center cursor-pointer" onClick={()=>{window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/oauth/kakao/login`, "_blank")}}>
-
+                    <div className="flex flex-row justify-center">
                         <a 
                             href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/oauth/kakao/login`}
                             className="flex flex-row bg-[#FEE500] rounded-2xl px-6 py-3 w-fit cursor-pointer hover:bg-[#FDD835] transition-colors no-underline items-center gap-2"
