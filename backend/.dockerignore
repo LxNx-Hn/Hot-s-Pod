@@ -44,6 +44,3 @@ scripts/
 
 # API 테스트 결과
 api_get_test_results.json
-
-# DB 초기화 스크립트 (수동 실행용)
-init_db.py
