@@ -11,7 +11,7 @@ export default function KakaoMap({ onSelect }) {
   }, [onSelect]);
 
   useEffect(() => {
-    const initMap = (lat, lng) => {
+    const initMap = (lat, lng, showMarker = true) => {
       if (!window.kakao || !containerRef.current) return;
       const { kakao } = window;
 
@@ -25,25 +25,37 @@ export default function KakaoMap({ onSelect }) {
         map.setZoomable(true);
 
         const geocoder = new kakao.maps.services.Geocoder();
-        const marker = new kakao.maps.Marker({ map: null });
+        const marker = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(lat, lng),
+          map: showMarker ? map : null,
+        });
 
-        kakao.maps.event.addListener(map, "click", function (mouseEvent) {
-          const latlng = mouseEvent.latLng;
-
-          marker.setPosition(latlng);
-          marker.setMap(map);
-
-          const lat = latlng.getLat();
-          const lng = latlng.getLng();
-
+        // 최초 현위치 마커 select 콜백
+        if (showMarker && onSelectRef.current) {
           geocoder.coord2Address(lng, lat, (result, status) => {
-            if (!onSelectRef.current) return;
-
             if (status === kakao.maps.services.Status.OK) {
               const road = result[0].road_address?.address_name || "";
               const jibun = result[0].address?.address_name || "";
               const address = road || jibun;
+              onSelectRef.current({ lat, lng, address });
+            } else {
+              onSelectRef.current({ lat, lng, address: "" });
+            }
+          });
+        }
 
+        kakao.maps.event.addListener(map, "click", function (mouseEvent) {
+          const latlng = mouseEvent.latLng;
+          marker.setPosition(latlng);
+          marker.setMap(map);
+          const lat = latlng.getLat();
+          const lng = latlng.getLng();
+          geocoder.coord2Address(lng, lat, (result, status) => {
+            if (!onSelectRef.current) return;
+            if (status === kakao.maps.services.Status.OK) {
+              const road = result[0].road_address?.address_name || "";
+              const jibun = result[0].address?.address_name || "";
+              const address = road || jibun;
               onSelectRef.current({ lat, lng, address });
             } else {
               onSelectRef.current({ lat, lng, address: "" });
@@ -60,15 +72,16 @@ export default function KakaoMap({ onSelect }) {
           (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            initMap(lat, lng);
+            initMap(lat, lng, true);
           },
           (error) => {
-            console.warn("Geolocation error:", error);
-            initMap(37.5665, 126.9780); // 실패 시 서울
+            alert("현위치 권한이 거부되어 서울로 표시됩니다.");
+            initMap(37.5665, 126.9780, false); // 실패 시 서울, 마커 없음
           }
         );
       } else {
-        initMap(37.5665, 126.9780); // Geolocation 미지원 시 서울
+        alert("현위치 기능을 지원하지 않아 서울로 표시됩니다.");
+        initMap(37.5665, 126.9780, false); // Geolocation 미지원 시 서울, 마커 없음
       }
     };
 
