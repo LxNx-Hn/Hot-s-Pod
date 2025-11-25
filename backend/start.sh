@@ -1,14 +1,30 @@
 #!/bin/bash
 set -e
 
+echo "========================================="
 echo "Starting Hot's POD Backend..."
-echo "Database: ${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}"
+echo "========================================="
 
-# 환경변수 확인
-if [ -z "$DATABASE_NAME" ]; then
-  echo "ERROR: DATABASE_NAME is not set!"
-  exit 1
-fi
+# 환경변수 출력 (디버깅용)
+echo "Environment Variables:"
+echo "DATABASE_HOST: ${DATABASE_HOST:-NOT_SET}"
+echo "DATABASE_PORT: ${DATABASE_PORT:-NOT_SET}"
+echo "DATABASE_NAME: ${DATABASE_NAME:-NOT_SET}"
+echo "DATABASE_USER: ${DATABASE_USER:-NOT_SET}"
+echo "KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-NOT_SET}"
+echo "FRONTEND_URL: ${FRONTEND_URL:-NOT_SET}"
+echo "INIT_DB: ${INIT_DB:-NOT_SET}"
+echo "========================================="
+
+# 기본값 설정
+DATABASE_HOST=${DATABASE_HOST:-127.0.0.1}
+DATABASE_PORT=${DATABASE_PORT:-3306}
+DATABASE_NAME=${DATABASE_NAME:-hots_pod_db}
+DATABASE_USER=${DATABASE_USER:-hots_pod_user}
+DATABASE_PASSWORD=${DATABASE_PASSWORD:-2114}
+INIT_DB=${INIT_DB:-true}
+
+echo "Database: ${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}"
 
 # MariaDB 시작
 echo "Starting MariaDB..."
