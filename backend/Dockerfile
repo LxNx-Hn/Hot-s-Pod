@@ -46,6 +46,7 @@ set -e\n\
 echo "Starting Hot'\''s POD Backend..."\n\
 echo "Database: $DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"\n\
 \n\
+RUN echo '#!/bin/bash\n\
 # MariaDB 시작\n\
 echo "Starting MariaDB..."\n\
 service mariadb start\n\
@@ -70,6 +71,4 @@ fi\n\
 echo "Starting uvicorn server..."\n\
 exec uvicorn main:app --host 0.0.0.0 --port 8000' > /app/start.sh && \
     chmod +x /app/start.sh
-RUN sed -i '2i\
 # 시작 스크립트 실행
-CMD ["/bin/bash", "/app/start.sh"]
