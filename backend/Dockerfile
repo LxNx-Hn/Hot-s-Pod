@@ -1,3 +1,5 @@
+FROM python:3.11-slim
+
 # Hot's POD Backend Dockerfile
 
 # 작업 디렉토리 설정
