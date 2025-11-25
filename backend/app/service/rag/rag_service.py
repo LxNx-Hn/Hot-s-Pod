@@ -21,13 +21,16 @@ class RagService: #친절한 주석 < -RAG서비스
         logger.info("ChromaDB collection ready")
 
     def search(self, query: str, rag_query_repo: RagQueryRepository) -> List[Dict[str, Any]]: #이게 검색임
-        logger.info(f"RAG Search: '{query}'")   
-        all_categories = rag_query_repo.get_all_categories()  #대충뭔지 알겠죠? 다 가져오는겁니다     
+        logger.info(f"RAG Search: '{query}'")
+        all_categories = rag_query_repo.get_all_categories()  #대충뭔지 알겠죠? 다 가져오는겁니다
+        # 카테고리를 길이순으로 정렬해서 더 구체적인(긴) 카테고리부터 매칭
+        sorted_categories = sorted(all_categories, key=lambda x: -len(x['category_name']))
         found_category_id = None
-        for cat in all_categories:
+        for cat in sorted_categories:
             if cat['category_name'] in query:
                 found_category_id = cat['category_id'] #이거까지는 규칙기반 매핑이에요. 왜? 금쪽이 사용자가 선택하니까!
-                break       
+                logger.info(f"Matched category: {cat['category_name']} (ID: {cat['category_id']})")
+                break
         place_keyword = None
         for keyword in settings.PLACE_KEYWORDS: #이거 CONFIG에 있는 키워드 사전인데, 규칙기반 매핑하고 시작하면 진짜 개빨라서 채택함
             if keyword in query:
@@ -43,8 +46,8 @@ class RagService: #친절한 주석 < -RAG서비스
             logger.warning("No vector search results") # 진짜 예외처리 안하는데 코파일럿이 이거보고 죽일라해서 넣음
             return []
         
-        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.7 이상이면 관련없다고 판단)
-        SIMILARITY_THRESHOLD = 0.7
+        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.85 이상이면 관련없다고 판단)
+        SIMILARITY_THRESHOLD = 0.85
         retrieved_pod_ids = []
         distances = results['distances'][0] if results['distances'] else []
         
