@@ -76,8 +76,7 @@ app = FastAPI(
     title="Hot's POD API",
     description="AI 기반 오프라인 소모임 플랫폼 백엔드",
     version="3.0.0",
-    lifespan=lifespan,
-    redirect_slashes=False  # trailing slash 리다이렉트 비활성화
+    lifespan=lifespan
 )
 
 app.add_middleware(
