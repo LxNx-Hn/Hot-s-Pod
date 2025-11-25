@@ -36,7 +36,7 @@ class PodMemberQueryRepository:
                 AND pm.user_id = %s
                 JOIN (
                     SELECT pod_id, COUNT(*) AS current_member
-                    FROM Pod_Member
+                    FROM pod_member
                     GROUP BY pod_id
                 ) m
                     ON m.pod_id = p.pod_id
@@ -70,7 +70,7 @@ class PodMemberQueryRepository:
                 FROM pod p
                 LEFT JOIN (
                     SELECT pod_id, COUNT(*) AS current_member
-                    FROM Pod_Member
+                    FROM pod_member
                     GROUP BY pod_id
                 ) m
                     ON m.pod_id = p.pod_id
