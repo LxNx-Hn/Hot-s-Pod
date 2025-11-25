@@ -1,0 +1,49 @@
+# Backend .dockerignore
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 가상환경
+venv/
+env/
+ENV/
+
+# 환경 변수 파일 (보안)
+.env
+.env.local
+
+# 로그 파일
+*.log
+로그파일들.txt
+
+# 테스트 파일
+test_*.py
+*_test.py
+
+# ChromaDB 데이터 (Volume에서 관리)
+chroma_db_data/
+
+# Git 관련
+.git/
+.gitignore
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 임시 파일
+*.tmp
+*.bak
+
+# 개발용 스크립트
+scripts/
+
+# API 테스트 결과
+api_get_test_results.json
+
+# DB 초기화 스크립트 (수동 실행용)
+init_db.py
