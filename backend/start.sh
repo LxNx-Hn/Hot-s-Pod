@@ -1,14 +1,6 @@
 #!/bin/bash
 set -e
 
-# .env 파일 로드
-if [ -f "/app/.env" ]; then
-  echo "Loading environment variables from .env file..."
-  set -a
-  source /app/.env
-  set +a
-fi
-
 echo "Starting Hot's POD Backend..."
 echo "Database: ${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}"
 

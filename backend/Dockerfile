@@ -22,9 +22,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 환경변수 파일 복사 (먼저 복사)
-COPY .env /app/.env
-
 # 애플리케이션 코드 복사
 COPY . .
 
