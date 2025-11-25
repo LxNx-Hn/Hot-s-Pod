@@ -27,10 +27,22 @@ async def kakao_login():
     return RedirectResponse(url=kakao_auth_url)
 @router.get("/kakao/callback")
 async def kakao_callback(
-    code: str = Query(..., description="카카오 인가 코드"),
+    code: str = Query(None, description="카카오 인가 코드"),
+    error: str = Query(None, description="카카오 에러 코드"),
+    error_description: str = Query(None, description="카카오 에러 설명"),
     db: Connection = Depends(get_db_connection)
 ):
     try:
+        # 에러가 있으면 프론트엔드로 리다이렉트
+        if error:
+            print(f"[oauth] 카카오 에러: {error} - {error_description}")
+            redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?error={error}"
+            return RedirectResponse(url=redirect_url, status_code=302)
+        
+        # code가 없으면 에러
+        if not code:
+            raise HTTPException(status_code=422, detail="인가 코드가 필요합니다.")
+        
         # 1) 토큰 교환
         token_data = {
             "grant_type": "authorization_code",
