@@ -1,9 +1,8 @@
 # Hot's POD Backend Dockerfile
-# Python 3.11 베이스 이미지 사용
 FROM python:3.11-slim
 
 # 작업 디렉토리 설정
-WORKDIR /workspace
+WORKDIR /app
 
 # 시스템 패키지 업데이트 및 필수 도구 설치 (MariaDB 포함)
 RUN apt-get update && apt-get install -y \
@@ -26,11 +25,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # ChromaDB 데이터 디렉토리 생성
-RUN mkdir -p /workspace/chroma_db_data
+RUN mkdir -p /app/chroma_db_data
 
 # 포트 8000 노출
 EXPOSE 8000
-EXPOSE 3306
 
 # 환경변수 설정
 ENV PYTHONUNBUFFERED=1
@@ -41,7 +39,7 @@ ENV DATABASE_HOST=127.0.0.1
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# 시작 스크립트 생성 (/app에 생성하여 volume 마운트 문제 방지)
+# 시작 스크립트 생성
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
@@ -66,12 +64,10 @@ EOSQL\n\
 # DB 초기화 (필요시)\n\
 if [ "$INIT_DB" = "true" ]; then\n\
   echo "Initializing database schema..."\n\
-  cd /workspace\n\
   python init_db.py\n\
 fi\n\
 \n\
 echo "Starting uvicorn server..."\n\
-cd /workspace\n\
 exec uvicorn main:app --host 0.0.0.0 --port 8000' > /app/start.sh && \
     chmod +x /app/start.sh
 
