@@ -30,7 +30,7 @@ jobs:
       - name: Build backend Docker image
         run: |
           IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest" | tr '[:upper:]' '[:lower:]')
-          docker build -t "$IMAGE_NAME_LOWER" ./Backend
+          docker build -t "$IMAGE_NAME_LOWER" -f Backend/Dockerfile Backend/
           docker push "$IMAGE_NAME_LOWER"
 
   deploy-backend-runpod:
