@@ -64,7 +64,7 @@ jobs:
           echo "Waiting 30 seconds for pod to stop..."
           sleep 30
 
-      - name: Update Pod Image
+      - name: Update Pod Image and Environment
         run: |
           POD_ID="${{ secrets.RUNPOD_BACKEND_POD_ID }}"
           IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest" | tr '[:upper:]' '[:lower:]')
@@ -73,10 +73,10 @@ jobs:
             --header "content-type: application/json" \
             --header "authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
             --url "https://api.runpod.io/graphql" \
-            --data "{\"query\": \"mutation { podUpdateTemplateFields(input: {podId: \\\"$POD_ID\\\", imageName: \\\"$IMAGE_NAME_LOWER\\\"}) { id imageName } }\"}")
+            --data "{\"query\": \"mutation { podUpdateTemplateFields(input: {podId: \\\"$POD_ID\\\", imageName: \\\"$IMAGE_NAME_LOWER\\\", env: [{key: \\\"DATABASE_HOST\\\", value: \\\"127.0.0.1\\\"}, {key: \\\"DATABASE_PORT\\\", value: \\\"3306\\\"}, {key: \\\"DATABASE_USER\\\", value: \\\"${{ secrets.DATABASE_USER }}\\\"}, {key: \\\"DATABASE_PASSWORD\\\", value: \\\"${{ secrets.DATABASE_PASSWORD }}\\\"}, {key: \\\"DATABASE_NAME\\\", value: \\\"hots_pod_db\\\"}, {key: \\\"JWT_SECRET_KEY\\\", value: \\\"${{ secrets.JWT_SECRET_KEY }}\\\"}, {key: \\\"JWT_ALGORITHM\\\", value: \\\"HS256\\\"}, {key: \\\"KAKAO_REST_API_KEY\\\", value: \\\"${{ secrets.KAKAO_REST_API_KEY }}\\\"}, {key: \\\"KAKAO_REDIRECT_URI\\\", value: \\\"${{ secrets.KAKAO_REDIRECT_URI }}\\\"}, {key: \\\"KAKAO_CLIENT_SECRET\\\", value: \\\"${{ secrets.KAKAO_CLIENT_SECRET }}\\\"}, {key: \\\"FRONTEND_URL\\\", value: \\\"${{ secrets.FRONTEND_URL }}\\\"}, {key: \\\"INIT_DB\\\", value: \\\"true\\\"}]}) { id imageName } }\"}")
           
           echo "$RESPONSE"
-          echo "Waiting 10 seconds after image update..."
+          echo "Waiting 10 seconds after update..."
           sleep 10
 
       - name: Start RunPod Pod
