@@ -9,10 +9,10 @@ class PodMemberService:
         self.command_repo = command_repo
         self.query_repo = query_repo
     
-    def join_pod(self, join_data: PodMemberJoinRequest) -> int:
+    def join_pod(self, join_data: PodMemberJoinRequest, skip_check: bool = False) -> int:
         """Pod 참가"""
-        # 중복 참가 확인
-        if self.query_repo.is_member(join_data.pod_id, join_data.user_id):
+        # 중복 참가 확인 (skip_check가 True면 생략 - 관리자용)
+        if not skip_check and self.query_repo.is_member(join_data.pod_id, join_data.user_id):
             raise ValueError("Already a member of this pod")
         
         return self.command_repo.join_pod(join_data)

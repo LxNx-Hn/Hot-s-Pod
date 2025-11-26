@@ -30,7 +30,10 @@ def is_admin(db: Connection, user_id: int) -> bool:
 
 
 def is_pod_host(db: Connection, pod_id: int, user_id: int) -> bool:
-    """사용자가 해당 팟의 호스트인지 확인"""
+    """사용자가 해당 팟의 호스트인지 확인 (관리자는 항상 True)"""
+    if is_admin(db, user_id):
+        return True
+    
     with db.cursor() as cursor:
         sql = "SELECT host_user_id FROM pod WHERE pod_id = %s"
         cursor.execute(sql, (pod_id,))

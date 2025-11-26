@@ -7,7 +7,7 @@ class PodComment(BaseModel):
     comment_id: int
     user_id: int
     username: str
-    profile_picture: str
+    profile_picture: Optional[str] = None
     content: Optional[str] = None
     created_at: datetime
     parent_comment_id: Optional[int] = None
@@ -20,7 +20,7 @@ class PodMember(BaseModel):
     pod_member_id: int
     user_id: int
     username: str
-    profile_picture: str
+    profile_picture: Optional[str] = None
     amount: int
     joined_at: datetime
 class PodCreateRequest(BaseModel):
