@@ -64,14 +64,20 @@ class RagService: #친절한 주석 < -RAG서비스
         # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.5 이상이면 관련없다고 판단)
         SIMILARITY_THRESHOLD = 0.5
         retrieved_pod_ids = []
+        pod_similarity_map = {}
         distances = results['distances'][0] if results['distances'] else []
         
+        logger.info("=== 벡터 검색 결과 (유사도 순) ===")
         for idx, (id_str, distance) in enumerate(zip(results['ids'][0], distances)):
+            pod_id = int(id_str)
+            similarity_score = 1 - distance
+            pod_similarity_map[pod_id] = similarity_score
+            
             if distance < SIMILARITY_THRESHOLD:
-                retrieved_pod_ids.append(int(id_str))
-                logger.debug(f"POD {id_str}: distance={distance:.4f} (PASS)")
+                retrieved_pod_ids.append(pod_id)
+                logger.info(f"✅ POD {id_str}: distance={distance:.4f}, similarity={similarity_score:.4f} (PASS)")
             else:
-                logger.debug(f"POD {id_str}: distance={distance:.4f} (FILTERED OUT)")
+                logger.info(f"❌ POD {id_str}: distance={distance:.4f}, similarity={similarity_score:.4f} (FILTERED OUT)")
         
         if not retrieved_pod_ids:
             logger.info("No PODs passed similarity threshold")
@@ -80,6 +86,7 @@ class RagService: #친절한 주석 < -RAG서비스
         # 벡터검색으로 찾은 pod 들인데 이제 RDB필터링을 해봅시다
         # RDB필터링이 뭐냐면 벡터검색은 그냥 유사도 높은거 찾는거라서, 사용자가 장소나 카테고리 조건을 넣었을때 그걸 반영못함
         # 그래서 RDB에서 다시 필터링하는 과정이 필요함
+        logger.info(f"\n=== RDB 필터링 시작 ===")
         logger.info(f"Found {len(retrieved_pod_ids)} candidates")
         logger.info(f"Vector search POD IDs: {retrieved_pod_ids}")
         logger.info(f"Place keyword: {place_keyword}, Category ID: {found_category_id}")
@@ -88,8 +95,14 @@ class RagService: #친절한 주석 < -RAG서비스
             place_keyword=place_keyword,
             category_id=found_category_id
         )
-        #이렇게요
-        logger.info(f"Final results: {len(final_pods)} pods") #최종결과 로그
+        
+        logger.info(f"\n=== 최종 결과 ===")
+        logger.info(f"Final results: {len(final_pods)} pods")
+        for pod in final_pods:
+            pod_id = pod.get('pod_id')
+            similarity = pod_similarity_map.get(pod_id, 0)
+            logger.info(f"POD {pod_id}: '{pod.get('title')}' (similarity: {similarity:.4f})")
+        
         return final_pods
 
     def generate_answer(self, query: str, context_pods: List[Dict[str, Any]]) -> str: # LLM호출부입니다 뭐 여기서부턴 별거없어요
