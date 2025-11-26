@@ -21,6 +21,9 @@ class OAuthService:
     ) -> Dict[str, Any]:
         k_id = kakao_profile['id']
         
+        # 보안 로그: 카카오 ID 확인
+        print(f"[SECURITY] Kakao login attempt - k_id: {k_id}")
+        
         # properties 또는 kakao_account에서 닉네임 가져오기
         if 'properties' in kakao_profile:
             user_name = kakao_profile['properties'].get('nickname', '사용자')
@@ -37,12 +40,14 @@ class OAuthService:
         if existing_user:
             user_id = existing_user['user_id']
             is_new_user = False
+            print(f"[SECURITY] Existing user found - user_id: {user_id}, username: {existing_user.get('username')}")
             # 기존 사용자의 닉네임이 user 테이블에 없으면 업데이트
             if not existing_user.get('username') or existing_user['username'].startswith('사용자'):
                 self.user_command.update_username(user_id, user_name)
         else:
             user_id = self.user_command.create_user(username=user_name)
             is_new_user = True
+            print(f"[SECURITY] New user created - user_id: {user_id}, k_id: {k_id}")
         
         self.oauth_command.upsert_kakao_user(
             k_id=k_id,

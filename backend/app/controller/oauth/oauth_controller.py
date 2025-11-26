@@ -13,8 +13,8 @@ from datetime import timedelta
 from app.utils.cookies import set_access_cookie, set_refresh_cookie, clear_auth_cookies
 
 
-SAMESITE = "None"   # 프론트/백 다른 도메인이므로 "None" 필수
-SECURE   = True     # HTTPS 환경이므로 True
+SAMESITE = "None"   # 백/프론트 서버가 다르므로 None 필수
+SECURE   = True     # None 사용 시 Secure 필수 (HTTPS)
 router = APIRouter(prefix='/oauth', tags=['OAuth'])
 # 어우씨 여기 하나도 모르겠다 ㅋㅋㅋ
 @router.get("/kakao/login")
@@ -107,11 +107,10 @@ async def kakao_callback(
         # 5) 쿠키 + 리다이렉트
         redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?ok=1"
         resp = RedirectResponse(url=redirect_url, status_code=302)
-        # COOKIE_DOMAIN이 설정되어 있으면 크로스 도메인 쿠키 설정
-        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
-        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
-        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
-        print(f"[oauth] set cookies (domain={cookie_domain}) & redirect -> {redirect_url}")
+        # domain을 절대 설정하지 않음 (각 브라우저별로 독립적인 쿠키)
+        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE)
+        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE)
+        print(f"[oauth] set cookies (NO DOMAIN) & redirect -> {redirect_url}")
         return resp
 
     except requests.exceptions.RequestException as e:
@@ -141,16 +140,14 @@ async def refresh_token(request: Request, response: Response):
         data={"user_id": user_id},
         expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
-    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
+    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE)
     return {"ok": True}
 
 
 @router.post("/logout")
 async def logout(request: Request, response: Response):
     try:
-        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
-        clear_auth_cookies(response, domain=cookie_domain)
+        clear_auth_cookies(response)
         return {"message": "로그아웃 성공"}
     except Exception as e:
         print(f"[oauth] logout error: {e}")
