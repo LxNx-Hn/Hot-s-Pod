@@ -48,10 +48,11 @@ const time_delta_string = (string_time) => {
     else
       return `${Math.floor(timeDelta)}초 전`; 
   }
-const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null, onDeleteComment, currentUserId }) => {
+const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null, onDeleteComment, currentUserId, isAdmin }) => {
   const indentClass = getIndentClass(level);
   const isMyComment = comment.user_id === currentUserId;
-  const isDeleted = comment.content === "[삭제된 댓글입니다]";
+  const isDeleted = comment.user_id === null || comment.content === "[삭제된 댓글입니다]";
+  const canDelete = (isMyComment || isAdmin) && !isDeleted;
 
   return (
     <div
@@ -71,7 +72,7 @@ const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = nu
             <div className="text-xs text-[#888888]">
               {time_delta_string(comment.created_at)}
             </div>
-            {isMyComment && !isDeleted && (
+            {canDelete && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onDeleteComment(comment.comment_id); }}
                 className="text-xs text-red-500 hover:text-red-700 px-2 py-1"
@@ -95,6 +96,7 @@ const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = nu
               selectedId={selectedId}
               onDeleteComment={onDeleteComment}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -400,6 +402,30 @@ export default function ChatPage() {
     }
   };
 
+  // Pod 삭제
+  const handleDeletePod = async () => {
+    if (!confirm('정말로 이 POD를 삭제하시겠습니까?')) return;
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pods/${podId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        alert('POD가 삭제되었습니다.');
+        navigate('/');
+      } else {
+        throw new Error('삭제 권한이 없습니다.');
+      }
+    } catch (error) {
+      alert('POD 삭제에 실패했습니다: ' + error.message);
+    }
+  };
+
+  // 호스트 또는 관리자 확인
+  const isHostOrAdmin = me && (podDetail?.host_user_id === me.user_id || me.is_admin);
+
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
   if (meLoading || messageLoading || podDetailLoading) {
     return (
@@ -426,7 +452,17 @@ export default function ChatPage() {
         <div></div>
       </div>
       <div className="flex flex-col gap-8 py-8">
-        <div className="text-3xl font-black">{podDetail.title}</div>
+        <div className="flex flex-row justify-between items-center">
+          <div className="text-3xl font-black">{podDetail.title}</div>
+          {isHostOrAdmin && (
+            <button
+              onClick={handleDeletePod}
+              className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+            >
+              삭제
+            </button>
+          )}
+        </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2">
             <SizeComponent Component={PlaceOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
@@ -464,7 +500,15 @@ export default function ChatPage() {
                   <div className="w-full text-center">댓글이 없습니다.</div>
                 ) : (
                   commentTree.map((comment) => (
-                    <CommentItem key={comment.comment_id} comment={comment} setSelectedCommentId={handleSelectedCommentId} selectedId={selectedCommentId} />
+                    <CommentItem 
+                      key={comment.comment_id} 
+                      comment={comment} 
+                      setSelectedCommentId={handleSelectedCommentId} 
+                      selectedId={selectedCommentId}
+                      onDeleteComment={handleDeleteComment}
+                      currentUserId={me?.user_id}
+                      isAdmin={me?.is_admin || false}
+                    />
                   ))
                 )}
               

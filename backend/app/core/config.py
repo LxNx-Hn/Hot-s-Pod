@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     KAKAO_REDIRECT_URI: Optional[str] = None
     KAKAO_CLIENT_SECRET: Optional[str] = None
     VITE_API_BASE_URL: Optional[str] = None
+    
+    # Admin Emails (comma-separated, e.g., "admin1@example.com,admin2@kakao.com")
+    ADMIN_EMAILS: Optional[str] = None
 
     # Frontend URL
     FRONTEND_URL: str = "http://localhost:5173"
@@ -79,5 +82,11 @@ class Settings(BaseSettings):
         "env_file_encoding": "utf-8",
         "extra": "ignore",
     }
+    
+    def get_admin_emails(self) -> list[str]:
+        """관리자 이메일 리스트 반환"""
+        if not self.ADMIN_EMAILS:
+            return []
+        return [email.strip() for email in self.ADMIN_EMAILS.split(",") if email.strip()]
 
 settings = Settings()

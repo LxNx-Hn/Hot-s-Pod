@@ -32,9 +32,20 @@ class CommentCommandRepository:
                 raise
     
     def delete_comment(self, comment_id: int) -> bool:
-        """댓글 삭제"""
+        """댓글 소프트 삭제 (내용과 사용자 정보 변경)"""
         with self.db.cursor() as cursor:
-            sql = "DELETE FROM comment WHERE comment_id = %s"
+            # 자식 댓글이 있으면 내용만 삭제, 없으면 완전 삭제
+            check_sql = "SELECT COUNT(*) as child_count FROM comment WHERE parent_comment_id = %s"
+            cursor.execute(check_sql, (comment_id,))
+            result = cursor.fetchone()
+            
+            if result['child_count'] > 0:
+                # 자식이 있으면 소프트 삭제 (user_id는 NULL로 변경)
+                sql = "UPDATE comment SET content = '[삭제된 댓글입니다]', user_id = NULL WHERE comment_id = %s"
+            else:
+                # 자식이 없으면 완전 삭제
+                sql = "DELETE FROM comment WHERE comment_id = %s"
+            
             cursor.execute(sql, (comment_id,))
             self.db.commit()
             return cursor.rowcount > 0

@@ -34,6 +34,15 @@ class PodCreateRequest(BaseModel):
     max_peoples: int
     category_ids: List[int] = Field(..., min_items=0)
 
+class PodUpdateRequest(BaseModel):
+    event_time: Optional[datetime] = None
+    place: Optional[str] = Field(None, max_length=255)
+    place_detail: Optional[str] = Field(None, max_length=255)
+    title: Optional[str] = Field(None, max_length=255)
+    content: Optional[str] = None
+    min_peoples: Optional[int] = None
+    max_peoples: Optional[int] = None
+
 class PodResponse(BaseModel):
     pod_id: int
     host_user_id: int

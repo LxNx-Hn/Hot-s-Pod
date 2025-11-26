@@ -19,3 +19,25 @@ class UserCommandRepository:
             sql = "UPDATE user SET username = %s WHERE user_id = %s"
             cursor.execute(sql, (username, user_id))
             self.db.commit()
+    
+    def update_user(self, user_id: int, update_data: dict) -> bool:
+        """사용자 정보 업데이트 (본인만 가능)"""
+        with self.db.cursor() as cursor:
+            update_fields = []
+            values = []
+            
+            if 'username' in update_data:
+                update_fields.append("username = %s")
+                values.append(update_data['username'])
+            if 'phonenumber' in update_data:
+                update_fields.append("phonenumber = %s")
+                values.append(update_data['phonenumber'])
+            
+            if not update_fields:
+                return False
+            
+            values.append(user_id)
+            sql = f"UPDATE user SET {', '.join(update_fields)} WHERE user_id = %s"
+            cursor.execute(sql, values)
+            self.db.commit()
+            return cursor.rowcount > 0

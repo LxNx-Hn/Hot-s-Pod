@@ -3,6 +3,7 @@ from pymysql.connections import Connection
 from app.repository.oauth.oauth_command_repository import OAuthCommandRepository
 from app.repository.oauth.oauth_query_repository import OAuthQueryRepository
 from app.repository.user.user_command_repository import UserCommandRepository
+from app.core.config import settings
 from typing import Dict, Any
 
 #선생님 잘부탁합니다.. 읽어는 보겠는데요.. 써본적이 없어서 이게 맞는지 모르겠어요. 
@@ -24,6 +25,18 @@ class OAuthService:
         # 보안 로그: 카카오 ID 확인
         print(f"[SECURITY] Kakao login attempt - k_id: {k_id}")
         
+        # 이메일 추출
+        email = None
+        if 'kakao_account' in kakao_profile and 'email' in kakao_profile['kakao_account']:
+            email = kakao_profile['kakao_account']['email']
+            print(f"[SECURITY] Kakao email: {email}")
+        
+        # 관리자 여부 확인 (환경변수 기반)
+        admin_emails = settings.get_admin_emails()
+        is_admin = email in admin_emails if email else False
+        if is_admin:
+            print(f"[SECURITY] Admin user detected: {email}")
+        
         # properties 또는 kakao_account에서 닉네임 가져오기
         if 'properties' in kakao_profile:
             user_name = kakao_profile['properties'].get('nickname', '사용자')
@@ -44,10 +57,18 @@ class OAuthService:
             # 기존 사용자의 닉네임이 user 테이블에 없으면 업데이트
             if not existing_user.get('username') or existing_user['username'].startswith('사용자'):
                 self.user_command.update_username(user_id, user_name)
+            
+            # 관리자 권한 업데이트 (DB에도 저장)
+            if is_admin:
+                self._update_admin_status(user_id, True)
         else:
             user_id = self.user_command.create_user(username=user_name)
             is_new_user = True
             print(f"[SECURITY] New user created - user_id: {user_id}, k_id: {k_id}")
+            
+            # 신규 사용자가 관리자면 DB에 저장
+            if is_admin:
+                self._update_admin_status(user_id, True)
         
         self.oauth_command.upsert_kakao_user(
             k_id=k_id,
@@ -62,5 +83,14 @@ class OAuthService:
             "user_id": user_id,
             "username": user_name,
             "is_new_user": is_new_user,
-            "profile_picture": profile_picture
+            "profile_picture": profile_picture,
+            "is_admin": is_admin
         }
+    
+    def _update_admin_status(self, user_id: int, is_admin: bool) -> None:
+        """관리자 상태 DB 업데이트"""
+        with self.db.cursor() as cursor:
+            sql = "UPDATE user SET is_admin = %s WHERE user_id = %s"
+            cursor.execute(sql, (is_admin, user_id))
+            self.db.commit()
+            print(f"[SECURITY] Updated admin status - user_id: {user_id}, is_admin: {is_admin}")

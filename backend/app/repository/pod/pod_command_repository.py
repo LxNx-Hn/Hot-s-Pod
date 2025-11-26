@@ -44,3 +44,48 @@ class PodCommandRepository:
             except Exception:
                 self.db.rollback()
                 return False
+    
+    def update_pod(self, pod_id: int, pod_data: dict) -> bool:
+        """Pod 수정 (호스트 또는 관리자만 가능)"""
+        with self.db.cursor() as cursor:
+            update_fields = []
+            values = []
+            
+            if 'event_time' in pod_data:
+                update_fields.append("event_time = %s")
+                values.append(pod_data['event_time'])
+            if 'place' in pod_data:
+                update_fields.append("place = %s")
+                values.append(pod_data['place'])
+            if 'place_detail' in pod_data:
+                update_fields.append("place_detail = %s")
+                values.append(pod_data['place_detail'])
+            if 'title' in pod_data:
+                update_fields.append("title = %s")
+                values.append(pod_data['title'])
+            if 'content' in pod_data:
+                update_fields.append("content = %s")
+                values.append(pod_data['content'])
+            if 'min_peoples' in pod_data:
+                update_fields.append("min_peoples = %s")
+                values.append(pod_data['min_peoples'])
+            if 'max_peoples' in pod_data:
+                update_fields.append("max_peoples = %s")
+                values.append(pod_data['max_peoples'])
+            
+            if not update_fields:
+                return False
+            
+            values.append(pod_id)
+            sql = f"UPDATE pod SET {', '.join(update_fields)} WHERE pod_id = %s"
+            cursor.execute(sql, values)
+            self.db.commit()
+            return cursor.rowcount > 0
+    
+    def delete_pod(self, pod_id: int) -> bool:
+        """Pod 삭제 (호스트 또는 관리자만 가능)"""
+        with self.db.cursor() as cursor:
+            sql = "DELETE FROM pod WHERE pod_id = %s"
+            cursor.execute(sql, (pod_id,))
+            self.db.commit()
+            return cursor.rowcount > 0

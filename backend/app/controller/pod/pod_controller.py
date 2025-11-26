@@ -1,11 +1,12 @@
 # app/controller/pod/pod_controller.py
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pymysql.connections import Connection
 from app.database import get_db_connection
 from app.repository.pod.pod_command_repository import PodCommandRepository
 from app.repository.pod.pod_query_repository import PodQueryRepository
 from app.service.pod.pod_service import PodService
-from app.schemas.pod import PodCreateRequest, PodResponse, PodDetailResponse, PodListResponse
+from app.schemas.pod import PodCreateRequest, PodUpdateRequest, PodResponse, PodDetailResponse, PodListResponse
+from app.utils.permissions import get_user_from_token, require_host_or_admin
 from typing import List
 
 router = APIRouter(prefix="/pods", tags=["Pods"])
@@ -83,3 +84,49 @@ async def join_pod(
     if not success:
         raise HTTPException(status_code=400, detail="Failed to join pod")
     return {"message": "Successfully joined the pod"}
+
+@router.put("/{pod_id}", response_model=dict)
+async def update_pod(
+    pod_id: int,
+    pod_data: PodUpdateRequest,
+    request: Request,
+    db: Connection = Depends(get_db_connection),
+    pod_service: PodService = Depends(get_pod_service)
+):
+    """Pod 수정 (호스트 또는 관리자만 가능)"""
+    user_payload = get_user_from_token(request)
+    user_id = user_payload.get('user_id')
+    
+    # 호스트 또는 관리자 권한 확인
+    require_host_or_admin(db, pod_id, user_id)
+    
+    # 수정할 데이터만 dict로 변환
+    update_data = pod_data.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 내용이 없습니다")
+    
+    success = pod_service.update_pod(pod_id, update_data)
+    if not success:
+        raise HTTPException(status_code=404, detail="Pod를 찾을 수 없거나 수정에 실패했습니다")
+    
+    return {"message": "Pod가 성공적으로 수정되었습니다"}
+
+@router.delete("/{pod_id}", response_model=dict)
+async def delete_pod(
+    pod_id: int,
+    request: Request,
+    db: Connection = Depends(get_db_connection),
+    pod_service: PodService = Depends(get_pod_service)
+):
+    """Pod 삭제 (호스트 또는 관리자만 가능)"""
+    user_payload = get_user_from_token(request)
+    user_id = user_payload.get('user_id')
+    
+    # 호스트 또는 관리자 권한 확인
+    require_host_or_admin(db, pod_id, user_id)
+    
+    success = pod_service.delete_pod(pod_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Pod를 찾을 수 없거나 삭제에 실패했습니다")
+    
+    return {"message": "Pod가 성공적으로 삭제되었습니다"}

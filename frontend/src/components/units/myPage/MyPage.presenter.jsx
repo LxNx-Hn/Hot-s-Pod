@@ -53,6 +53,9 @@ export default function MyPageUI() {
     const { data, isLoading, isError } = useMe();
     const [user,setUser] = useState(data);
     const [isPodModalOpen, setIsPodModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editUsername, setEditUsername] = useState("");
+    const [editPhoneNumber, setEditPhoneNumber] = useState("");
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { data: podsData, isLoading: podLoading, isError: isPodError } = usePodMe(data?.user_id);
@@ -64,6 +67,39 @@ export default function MyPageUI() {
 
     const handleClosePodModal = () => {
         setIsPodModalOpen(false);
+    };
+
+    const handleOpenEditModal = () => {
+        setEditUsername(data?.username || "");
+        setEditPhoneNumber(data?.phonenumber || "");
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+    };
+
+    const handleSaveProfile = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/me`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: editUsername,
+                    phonenumber: editPhoneNumber
+                })
+            });
+            
+            if (response.ok) {
+                alert('프로필이 수정되었습니다.');
+                window.location.reload();
+            } else {
+                throw new Error('프로필 수정에 실패했습니다.');
+            }
+        } catch (error) {
+            alert('프로필 수정 중 오류가 발생했습니다: ' + error.message);
+        }
     };
 
     const handleChange = (event, newValue) => {
@@ -95,6 +131,14 @@ export default function MyPageUI() {
             </div>
             <div className='flex flex-row justify-center font-bold text-2xl'>
                 {user?.username}
+            </div>
+            <div className='flex flex-row justify-center'>
+                <button 
+                    onClick={handleOpenEditModal}
+                    className='px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors'
+                >
+                    프로필 수정
+                </button>
             </div>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={value} onChange={handleChange} 
@@ -213,6 +257,51 @@ export default function MyPageUI() {
                 onClose={handleClosePodModal}
                 onSave={handleSavePod}
             />
+            
+            {/* 프로필 수정 모달 */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+                        <h2 className="text-xl font-bold mb-4">프로필 수정</h2>
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">닉네임</label>
+                                <input
+                                    type="text"
+                                    value={editUsername}
+                                    onChange={(e) => setEditUsername(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">전화번호</label>
+                                <input
+                                    type="text"
+                                    value={editPhoneNumber}
+                                    onChange={(e) => setEditPhoneNumber(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="010-1234-5678"
+                                />
+                            </div>
+                            <div className="flex flex-row gap-2 justify-end mt-4">
+                                <button
+                                    onClick={handleCloseEditModal}
+                                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleSaveProfile}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                >
+                                    저장
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             <Footer active={active} setActive={setActive}/>
         </div>
     )

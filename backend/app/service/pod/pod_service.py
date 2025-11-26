@@ -29,6 +29,13 @@ class PodService:
     
     def join_pod(self, pod_id: int, user_id: int) -> bool:
         return self.command_repo.join_pod(pod_id, user_id)
+    
+    def update_pod(self, pod_id: int, update_data: dict) -> bool:
+        return self.command_repo.update_pod(pod_id, update_data)
+    
+    def delete_pod(self, pod_id: int) -> bool:
+        return self.command_repo.delete_pod(pod_id)
+    
     def search_pod(self, query: str, limit: int = 100, offset: int = 0) -> List[PodListResponse]:
         pods_data = self.query_repo.find_pods_by_query(query, limit, offset)
         return [PodListResponse(**pod) for pod in pods_data]

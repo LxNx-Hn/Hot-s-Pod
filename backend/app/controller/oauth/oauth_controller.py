@@ -24,6 +24,7 @@ async def kakao_login():
         f"?client_id={settings.KAKAO_REST_API_KEY}"
         f"&redirect_uri={settings.KAKAO_REDIRECT_URI}"
         f"&response_type=code"
+        f"&scope=account_email"  # 이메일 동의 추가
     )
     return RedirectResponse(url=kakao_auth_url)
 @router.get("/kakao/callback")
@@ -92,11 +93,12 @@ async def kakao_callback(
         print("[oauth] after service, user_info =", user_info)
         user_id = user_info["user_id"]
         username = user_info["username"]
+        is_admin = user_info.get("is_admin", False)
 
-        # 4) JWT 생성
+        # 4) JWT 생성 (is_admin 포함)
         print("[oauth] before create_access_token")
         access_token = create_access_token(
-            data={"user_id": user_id, "username": username},
+            data={"user_id": user_id, "username": username, "is_admin": is_admin},
             expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
         )
         refresh_token = create_access_token(
