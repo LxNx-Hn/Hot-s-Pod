@@ -42,10 +42,19 @@ class PodMemberCommandRepository:
             return cursor.lastrowid
     
     def leave_pod(self, pod_id: int, user_id: int) -> bool:
-        """Pod 탈퇴"""
+        """Pod 탈퇴 (host가 나가면 POD 삭제)"""
         with self.db.cursor() as cursor:
-            sql = "DELETE FROM pod_member WHERE pod_id = %s AND user_id = %s"
-            cursor.execute(sql, (pod_id, user_id))
+            # host 확인
+            cursor.execute("SELECT host_user_id FROM pod WHERE pod_id = %s", (pod_id,))
+            result = cursor.fetchone()
+            
+            if result and result['host_user_id'] == user_id:
+                # host가 나가면 POD 삭제
+                cursor.execute("DELETE FROM pod WHERE pod_id = %s", (pod_id,))
+            else:
+                # 일반 멤버는 pod_member에서만 제거
+                cursor.execute("DELETE FROM pod_member WHERE pod_id = %s AND user_id = %s", (pod_id, user_id))
+            
             self.db.commit()
             return cursor.rowcount > 0
     

@@ -61,8 +61,8 @@ class RagService: #친절한 주석 < -RAG서비스
             logger.warning("No vector search results") # 진짜 예외처리 안하는데 코파일럿이 이거보고 죽일라해서 넣음
             return []
         
-        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.6 이상이면 관련없다고 판단)
-        SIMILARITY_THRESHOLD = 0.6
+        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.73 이상이면 관련없다고 판단)
+        SIMILARITY_THRESHOLD = 0.73
         retrieved_pod_ids = []
         pod_similarity_map = {}
         distances = results['distances'][0] if results['distances'] else []
@@ -113,20 +113,19 @@ class RagService: #친절한 주석 < -RAG서비스
         
         return final_pods
 
-    def generate_answer(self, query: str, context_pods: List[Dict[str, Any]]) -> str: # LLM호출부입니다 뭐 여기서부턴 별거없어요
-        """LLM을 사용하여 답변 생성"""
+    def generate_answer(self, query: str, context_pods: List[Dict[str, Any]]) -> str:
+        """사용자에게 친근하게 답변 생성"""
         if not context_pods:
-            return "죄송합니다, 관련된 소모임을 찾을 수 없습니다." # 텍스트 이것들은 GPT한테 맡길께요.. 지금 쓰면 좋은말을 못할거같네요
+            return "죄송합니다, 관련된 소모임을 찾을 수 없습니다."
 
-        context_str = "다음은 관련 소모임입니다:\n\n"
-        for i, pod in enumerate(context_pods[:5], 1):
-            context_str += f"[{i}번]\n"
+        context_str = "다음은 추천 소모임 목록입니다:\n\n"
+        for pod in context_pods[:5]:
             context_str += f"- 제목: {pod['title']}\n"
             place_info = pod.get('place_detail', '')
             if pod.get('place'):
                 place_info = f"{pod['place']} {place_info}"
-            context_str += f"- 장소: {place_info}\n"
-            context_str += f"- 일시: {pod['event_time']}\n\n"
+            context_str += f"  장소: {place_info}\n"
+            context_str += f"  일시: {pod['event_time']}\n\n"
         
         return self._generate_with_local_llm(query, context_str)
             
@@ -136,7 +135,7 @@ class RagService: #친절한 주석 < -RAG서비스
         messages = [
             {
                 "role": "system", 
-                "content": "당신은 Hot's POD의 친절한 AI 어시스턴트입니다. 소모임 정보를 바탕으로 자연스럽게 답변하세요."
+                "content": "당신은 Hot's POD의 친절한 AI 어시스턴트입니다. 현재는 2025년입니다. 소모임 정보를 바탕으로 자연스럽고 친근하게 답변하세요. [1번], [2번] 같은 번호는 사용하지 마세요."
             },
             {
                 "role": "user", 

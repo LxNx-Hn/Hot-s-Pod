@@ -31,7 +31,7 @@ export default function PodListContainer() {
     const handleSavePod = async (podData) => {
         try {
             await dispatch(createPod(podData)).unwrap();
-            alert('POD가 생성되었습니다!');
+            alert('POD이 생성되었습니다!');
             dispatch(fetchPods());
         } catch (error) {
             alert('POD 생성에 실패했습니다: ' + error.message);
