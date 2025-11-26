@@ -13,6 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
 import { imageData } from "../../../data/categories.js";
+import { toSeoulDate } from "../../../utils/time.js";
 export default function MainUI({categories, selectedCategory, setSelectedCategory, orderBy, handleChange, pods, onOpenPodModal, onPodClick, isGenerating = false}) {
     const navigate = useNavigate();
     const [active, setActive] = useState(0);
