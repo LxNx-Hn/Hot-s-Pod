@@ -83,7 +83,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://hot-s-pod.netlify.app",  # Netlify 프론트엔드
+        "https://hot-s-pod.netlify.app",
+        "https://hotspod.online",
     ],
     allow_credentials=True,
     allow_methods=["*"],
