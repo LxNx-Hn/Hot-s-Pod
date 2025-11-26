@@ -3,15 +3,8 @@ import { api } from "../api/api";
 import { useNavigate } from "react-router-dom";
 
 async function fetchMe({ signal }) {
-  try{
-    const res = await api.get("/users/me", { signal });
-    return res.data;
-  }
-  catch (e)
-  {
-    const navigate = useNavigate();
-    navigate("/login");
-  }
+  const res = await api.get("/users/me", { signal });
+  return res.data;
 }
 
 export function useMe() {
@@ -23,10 +16,8 @@ export function useMe() {
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: false, // 401 재시도는 인터셉터가 담당
-    onSuccess: (data) => {
-      alert("[useMe] /users/me =>", data);
-    },
     onError: (error) => {
+      // 인증 실패시 로그인 페이지로 이동
       navigate("/login");
     }
   });
