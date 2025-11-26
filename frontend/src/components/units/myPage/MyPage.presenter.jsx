@@ -144,10 +144,11 @@ export default function MyPageUI() {
             });
             
             if (response.ok) {
+                // 쿠키는 백엔드에서 삭제됨
                 await LogOut();
-                localStorage.removeItem('access_token');
+                localStorage.clear(); // 모든 로컬 스토리지 삭제
                 alert('회원 탈퇴가 완료되었습니다.');
-                navigate("/login");
+                window.location.href = '/'; // 홈으로 강제 리다이렉트
             } else {
                 throw new Error('탈퇴 실패');
             }

@@ -67,7 +67,7 @@ const CommentItem = ({
   const canDelete = (isMyComment || isAdmin) && !isDeleted; // 본인 또는 관리자
   const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 본인만
   const isEditing = editingCommentId === comment.comment_id;
-  const isEdited = comment.updated_at && comment.created_at !== comment.updated_at;
+  const isEdited = !isDeleted && comment.updated_at && comment.created_at !== comment.updated_at;
 
   return (
     <div

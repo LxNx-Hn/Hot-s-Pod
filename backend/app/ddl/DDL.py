@@ -18,9 +18,7 @@ DROP TABLE IF EXISTS `category`;
 DROP TABLE IF EXISTS `kakaoapi`;
 DROP TABLE IF EXISTS `user`;
 
-DROP TRIGGER IF EXISTS `trg_pod_after_insert`;
-DROP TRIGGER IF EXISTS `trg_pod_after_update`;
-DROP TRIGGER IF EXISTS `trg_pod_after_delete`;
+DROP TRIGGER IF EXISTS `trg_user_before_delete`;
 
 DROP PROCEDURE IF EXISTS `sp_CreatePod`;
 DROP PROCEDURE IF EXISTS `sp_GetPodDetailsForVectorizing`;
@@ -184,6 +182,21 @@ FOR EACH ROW
 BEGIN
     INSERT INTO `vectorsyncqueue` (`pod_id`, `action_type`, `status`, `created_at`)
     VALUES (OLD.`pod_id`, 'delete', 'pending', CURRENT_TIMESTAMP);
+END$$
+
+CREATE TRIGGER `trg_user_before_delete`
+BEFORE DELETE ON `user`
+FOR EACH ROW
+BEGIN
+    -- 탈퇴 회원의 모든 댓글 내용 가리기
+    -- user_id가 OLD.user_id이거나 이미 NULL인 모든 댓글을 업데이트
+    UPDATE `comment` 
+    SET `content` = '[탈퇴한 회원의 댓글입니다]', 
+        `updated_at` = NULL
+    WHERE `user_id` = OLD.`user_id`;
+    
+    -- 이미 삭제된 댓글도 탈퇴로 변경하려면 아래 추가 (선택)
+    -- 하지만 user_id가 NULL이면 원작성자 추적 불가능하므로 현재는 생략
 END$$
 
 DELIMITER ;
@@ -421,6 +434,49 @@ INSERT INTO `categorylink` (`pod_id`, `category_id`) VALUES
 (38, 1),
 (39, 3),
 (40, 11);
+
+/* 기존 더미 Pod의 호스트를 pod_member에 추가 */
+INSERT INTO `pod_member` (`user_id`, `pod_id`, `amount`, `joined_at`) VALUES
+(1, 1, 0, NOW()),
+(2, 2, 0, NOW()),
+(3, 3, 0, NOW()),
+(1, 4, 0, NOW()),
+(2, 5, 0, NOW()),
+(3, 6, 0, NOW()),
+(1, 7, 0, NOW()),
+(2, 8, 0, NOW()),
+(3, 9, 0, NOW()),
+(1, 10, 0, NOW()),
+(2, 11, 0, NOW()),
+(3, 12, 0, NOW()),
+(1, 13, 0, NOW()),
+(2, 14, 0, NOW()),
+(3, 15, 0, NOW()),
+(1, 16, 0, NOW()),
+(2, 17, 0, NOW()),
+(3, 18, 0, NOW()),
+(1, 19, 0, NOW()),
+(2, 20, 0, NOW()),
+(4, 21, 0, NOW()),
+(5, 22, 0, NOW()),
+(6, 23, 0, NOW()),
+(7, 24, 0, NOW()),
+(8, 25, 0, NOW()),
+(4, 26, 0, NOW()),
+(5, 27, 0, NOW()),
+(6, 28, 0, NOW()),
+(7, 29, 0, NOW()),
+(8, 30, 0, NOW()),
+(4, 31, 0, NOW()),
+(5, 32, 0, NOW()),
+(6, 33, 0, NOW()),
+(7, 34, 0, NOW()),
+(8, 35, 0, NOW()),
+(4, 36, 0, NOW()),
+(5, 37, 0, NOW()),
+(6, 38, 0, NOW()),
+(7, 39, 0, NOW()),
+(8, 40, 0, NOW());
 """
 
 def execute_ddl(connection):

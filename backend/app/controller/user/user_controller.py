@@ -82,6 +82,8 @@ async def delete_my_account(
     service: UserService = Depends(get_user_service)
 ):
     """현재 로그인한 사용자 탈퇴 (본인만 가능)"""
+    from fastapi.responses import JSONResponse
+    
     user_payload = get_user_from_token(request)
     user_id = user_payload.get('user_id')
     
@@ -96,4 +98,8 @@ async def delete_my_account(
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
     
-    return {"message": "회원 탈퇴가 완료되었습니다"}
+    # 쿠키 삭제하여 자동 재가입 방지
+    response = JSONResponse(content={"message": "회원 탈퇴가 완료되었습니다"})
+    response.delete_cookie(key="access_token", path="/", domain=None)
+    response.delete_cookie(key="refresh_token", path="/", domain=None)
+    return response
