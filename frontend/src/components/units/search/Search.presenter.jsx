@@ -16,6 +16,8 @@ import Footer from "../../common/layout/footer/index.jsx"
 import { imageData } from "../../../data/categories.js";
 
 
+import { toSeoulDate } from "../../../utils/time";
+
 export default function SearchPresenter({ query, setQuery, onSearch,
         isRAGOpened,
         setIsRAGOpened,
@@ -124,9 +126,9 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                                     <div className="text-[#888888] text-xs">{pod.content}</div>
                                     <div className='flex flex-row justify-between'>
                                         <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
-                                        {Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
+                                        {Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
                                         <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>:
-                                        <div className='text-[#FDC862] text-xs font-semibold'>D{Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}</div>
+                                        <div className='text-[#FDC862] text-xs font-semibold'>D{Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}</div>
                                         }
                                     </div>
                                     <div className='flex flex-row gap-1'>
