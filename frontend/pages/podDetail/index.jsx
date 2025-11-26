@@ -22,9 +22,11 @@ const getIndentClass = (level) => {
   if (level === 2) return "pl-8";
   return "pl-12"; // 3단계 이상은 고정
 };
+import { toSeoulDate, formatSeoul } from "../../src/utils/time";
+
 const time_delta_string = (string_time) => {
-    const createdAt = new Date(string_time);
-    const now = new Date();
+  const createdAt = toSeoulDate(string_time);
+  const now = new Date();
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
@@ -327,10 +329,10 @@ export default function ChatPage() {
     return `${number}`
   }
   const date_toString = (date) => {
-    const newDate = new Date(date);
+    const newDate = toSeoulDate(date);
     const weekDays = ["일","월","화","수","목","금","토"];
     //요일 .getDay -> 0~6 > 일 ~ 토
-    var result = `${newDate.getFullYear()}.${zeroPadding(newDate.getMonth()+1)}.${zeroPadding(newDate.getDate())} ${weekDays[newDate.getDay()]}요일 ${zeroPadding(newDate.getHours())}:${zeroPadding(newDate.getMinutes())}:${zeroPadding(newDate.getSeconds())}`;
+    var result = formatSeoul(newDate, { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     return result;
   }
   const joinPodFunc = async() => {
@@ -449,9 +451,8 @@ export default function ChatPage() {
                       <div className="flex flex-col">
                         <div className="bg-white rounded-lg px-4 py-1 shadow-sm text-xs text-gray-500 mb-1">
                           {msg.time
-                            ? new Date(msg.time).toLocaleString("ko-KR")
-                            : msg.timestamp
-                            ? new Date(msg.timestamp).toLocaleString("ko-KR")
+                              ? formatSeoul(msg.time)
+                              : formatSeoul(msg.timestamp)
                             : "방금"}
                         </div>
                         <div className="flex flex-row w-ful justify-center">
@@ -466,9 +467,8 @@ export default function ChatPage() {
                       <div className="text-xs text-gray-500 mb-1">
                         {msg.username ?? "-"} · {" "}
                         {msg.time
-                          ? new Date(msg.time).toLocaleString("ko-KR")
-                          : msg.timestamp
-                          ? new Date(msg.timestamp).toLocaleString("ko-KR")
+                            ? formatSeoul(msg.time)
+                            : formatSeoul(msg.timestamp)
                           : "방금"}
                       </div>
                       <div className="text-sm whitespace-pre-wrap break-words">
