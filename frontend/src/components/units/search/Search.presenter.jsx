@@ -193,7 +193,7 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                     <div className="flex flex-row justify-between items-center p-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-2xl">
                         <div className="flex items-center gap-2">
                             <SizeComponent Component={ChatIcon} className="text-white" fontSize={24}/>
-                            <div className="font-bold text-white text-lg">AI 챗봇</div>
+                            <div className="font-bold text-white text-lg">Hotspod RAG</div>
                         </div>
                         <button 
                             className="rounded-full bg-white/20 hover:bg-white/30 cursor-pointer text-white font-bold w-8 h-8 flex items-center justify-center transition-colors" 
