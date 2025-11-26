@@ -112,6 +112,7 @@ CREATE TABLE `comment` (
   `content` TEXT NOT NULL,
   `parent_comment_id` INT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`comment_id`),
   INDEX `IDX_Comment_pod` (`pod_id`),
   CONSTRAINT `FK_Pod_TO_Comment` FOREIGN KEY (`pod_id`) REFERENCES `pod` (`pod_id`) ON DELETE CASCADE,

@@ -16,6 +16,7 @@ class CommentResponse(BaseModel):
     content: str
     parent_comment_id: Optional[int]
     created_at: datetime
+    updated_at: Optional[datetime] = None
     username: Optional[str] = None
 
     class Config:

@@ -26,7 +26,7 @@ import { toSeoulDate, formatSeoul } from "../../src/utils/time";
 
 const time_delta_string = (string_time) => {
   const createdAt = toSeoulDate(string_time);
-  const now = toSeoulDate(new Date()); // toSeoulDate로 통일
+  const now = new Date(); // 현재 로컬 시간 사용
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
@@ -68,8 +68,9 @@ const CommentItem = ({
   const isDeleted = comment.user_id === null || comment.content === "[삭제된 댓글입니다]";
   const isWithdrawnUser = comment.username === "탈퇴한 회원";
   const canDelete = (isMyComment || isAdmin) && !isDeleted;
-  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser;
+  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 관리자도 본인 댓글만 수정 가능
   const isEditing = editingCommentId === comment.comment_id;
+  const isEdited = comment.updated_at && comment.created_at !== comment.updated_at;
 
   return (
     <div
@@ -88,6 +89,7 @@ const CommentItem = ({
           <div className="flex flex-row gap-2 items-center">
             <div className="text-xs text-[#888888]">
               {time_delta_string(comment.created_at)}
+              {isEdited && <span className="ml-1 text-[#666666]">(수정됨)</span>}
             </div>
             {!isEditing && canEdit && (
               <button 
@@ -452,13 +454,20 @@ export default function ChatPage() {
     if (!confirm('댓글을 삭제하시겠습니까?')) return;
     
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/comments/${commentId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/comments/${commentId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '댓글 삭제에 실패했습니다.');
+      }
+      
       await refetchPodDetail();
     } catch (error) {
-      alert('댓글 삭제에 실패했습니다.');
+      alert(error.message || '댓글 삭제에 실패했습니다.');
+      console.error('댓글 삭제 오류:', error);
     }
   };
 
