@@ -61,8 +61,8 @@ class RagService: #친절한 주석 < -RAG서비스
             logger.warning("No vector search results") # 진짜 예외처리 안하는데 코파일럿이 이거보고 죽일라해서 넣음
             return []
         
-        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.5 이상이면 관련없다고 판단)
-        SIMILARITY_THRESHOLD = 0.5
+        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.6 이상이면 관련없다고 판단)
+        SIMILARITY_THRESHOLD = 0.6
         retrieved_pod_ids = []
         pod_similarity_map = {}
         distances = results['distances'][0] if results['distances'] else []
