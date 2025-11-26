@@ -26,7 +26,7 @@ import { toSeoulDate, formatSeoul } from "../../src/utils/time";
 
 const time_delta_string = (string_time) => {
   const createdAt = toSeoulDate(string_time);
-  const now = new Date();
+  const now = toSeoulDate(new Date()); // 현재 시간도 KST로 변환
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
@@ -48,25 +48,37 @@ const time_delta_string = (string_time) => {
     else
       return `${Math.floor(timeDelta)}초 전`; 
   }
-const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null }) => {
+const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null, onDeleteComment, currentUserId }) => {
   const indentClass = getIndentClass(level);
+  const isMyComment = comment.user_id === currentUserId;
+  const isDeleted = comment.content === "[삭제된 댓글입니다]";
 
   return (
     <div
       className={`flex flex-col gap-2 w-full ${indentClass}`}
     >
       
-      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"}`} onClick={()=>{setSelectedCommentId(comment.comment_id)}}>
+      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"} ${isDeleted ? 'opacity-60' : ''}`} onClick={()=>{!isDeleted && setSelectedCommentId(comment.comment_id)}}>
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-2">
             <img
-              src={comment.profile_picture}
+              src={isDeleted ? "https://via.placeholder.com/32" : comment.profile_picture}
               className="w-8 h-8 rounded-full"
             />
-            <div className="font-bold flex flex-col justify-center">{comment.username}</div>
+            <div className="font-bold flex flex-col justify-center">{isDeleted ? "삭제된 사용자" : comment.username}</div>
           </div>
-          <div className="text-xs text-[#888888]">
-            {time_delta_string(comment.created_at)}
+          <div className="flex flex-row gap-2 items-center">
+            <div className="text-xs text-[#888888]">
+              {time_delta_string(comment.created_at)}
+            </div>
+            {isMyComment && !isDeleted && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDeleteComment(comment.comment_id); }}
+                className="text-xs text-red-500 hover:text-red-700 px-2 py-1"
+              >
+                삭제
+              </button>
+            )}
           </div>
         </div>
         <p className="w-full">{comment.content}</p>
@@ -81,6 +93,8 @@ const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = nu
               setSelectedCommentId={setSelectedCommentId}
               level={level + 1}
               selectedId={selectedId}
+              onDeleteComment={onDeleteComment}
+              currentUserId={currentUserId}
             />
           ))}
         </div>
