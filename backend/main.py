@@ -12,6 +12,7 @@ from app.controller.user import user_controller
 from app.controller.pod import pod_controller
 from app.controller.oauth import oauth_controller
 from app.controller.rag import rag_controller
+from app.controller.debug_controller import router as debug_router
 from app.service.rag.rag_worker_service import RagWorkerService
 from app.controller.comment import comment_controller
 from app.controller.chat import chat_controller  
@@ -100,6 +101,7 @@ app.include_router(comment_controller.router)
 app.include_router(chat_controller.router)
 app.include_router(pod_member_controller.router)
 app.include_router(websocket.router)
+app.include_router(debug_router)
 
 @app.get("/", tags=["Root"])
 async def root():
