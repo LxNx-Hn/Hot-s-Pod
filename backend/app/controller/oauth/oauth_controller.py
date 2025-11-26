@@ -1,5 +1,7 @@
 # app/controller/oauth/oauth_controller.py
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from fastapi import APIRouter, HTTPException, Depends, Query, Request, Response, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from pymysql.connections import Connection
@@ -43,6 +45,13 @@ async def kakao_callback(
         if not code:
             raise HTTPException(status_code=422, detail="인가 코드가 필요합니다.")
         
+        # 준비: requests 세션 + 재시도 정책
+        session = requests.Session()
+        retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504], allowed_methods=["POST", "GET"])
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+
         # 1) 토큰 교환
         token_data = {
             "grant_type": "authorization_code",
@@ -51,11 +60,11 @@ async def kakao_callback(
             "code": code,
             "client_secret": settings.KAKAO_CLIENT_SECRET
         }
-        token_response = requests.post(
+        token_response = session.post(
             "https://kauth.kakao.com/oauth/token",
             headers={"Content-Type": "application/x-www-form-urlencoded;charset=utf-8"},
             data=token_data,
-            timeout=10
+            timeout=30
         )
         # 디버그 로그
         print("[oauth] token_status =", token_response.status_code)
@@ -65,10 +74,10 @@ async def kakao_callback(
         tokens = token_response.json()
 
         # 2) 프로필 조회
-        profile_response = requests.get(
+        profile_response = session.get(
             "https://kapi.kakao.com/v2/user/me",
             headers={"Authorization": f"Bearer {tokens['access_token']}"},
-            timeout=10
+            timeout=30
         )
         print("[oauth] profile_status =", profile_response.status_code)
         if profile_response.status_code != 200:
@@ -105,7 +114,8 @@ async def kakao_callback(
 
     except requests.exceptions.RequestException as e:
         print("[oauth] requests error =", repr(e))
-        raise HTTPException(status_code=400, detail="카카오 로그인 처리 중 오류가 발생했습니다.")
+        # 외부 OAuth 제공자와의 통신 실패는 게이트웨이 오류(502)로 처리
+        raise HTTPException(status_code=502, detail="카카오 API 연결 실패: 외부 인증 서버와 통신할 수 없습니다.")
     except Exception as e:
         import traceback; traceback.print_exc()
         print("[oauth] internal error =", repr(e))
