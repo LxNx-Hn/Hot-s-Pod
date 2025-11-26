@@ -41,7 +41,10 @@ class PodQueryRepository:
                             'parent_comment_id',  c.parent_comment_id,
                             'user_id',            c.user_id,
                             'username',           COALESCE(cu.username, '탈퇴한 회원'),
-                            'profile_picture',    COALESCE(ka.profile_picture, 'https://via.placeholder.com/32'),
+                            'profile_picture',    CASE
+                                                      WHEN cu.profile_picture_enabled = 1 THEN COALESCE(ka.profile_picture, 'https://via.placeholder.com/32')
+                                                      ELSE 'https://via.placeholder.com/32'
+                                                  END,
                             'content',            c.content,
                             'created_at',         c.created_at
                         )
@@ -77,7 +80,10 @@ class PodQueryRepository:
                             'pod_member_id',   pm2.pod_member_id,
                             'user_id',         pm2.user_id,
                             'username',        COALESCE(u2.username, '탈퇴한 회원'),
-                            'profile_picture', COALESCE(ka2.profile_picture, 'https://via.placeholder.com/32'),
+                            'profile_picture', CASE
+                                                   WHEN u2.profile_picture_enabled = 1 THEN COALESCE(ka2.profile_picture, 'https://via.placeholder.com/32')
+                                                   ELSE 'https://via.placeholder.com/32'
+                                               END,
                             'amount',          pm2.amount,
                             'joined_at',       pm2.joined_at
                         )

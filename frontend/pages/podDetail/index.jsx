@@ -30,23 +30,20 @@ const time_delta_string = (string_time) => {
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
-    const year_second = 3600*24*30*365;
     const month_second = 3600*24*30;
     const day_second = 3600*24;
     const hour_second = 3600;
     const minute_second = 60;
-    if(timeDelta > year_second)
-      return `${Math.floor(timeDelta/year_second)}년 전`;
-    if(timeDelta > month_second)
-      return `${Math.floor(timeDelta/month_second)}개월 전`;
-    if(timeDelta > day_second)
+    
+    if(timeDelta >= month_second)
+      return "오래 전";
+    if(timeDelta >= day_second)
       return `${Math.floor(timeDelta/day_second)}일 전`;
-    if(timeDelta > hour_second)
+    if(timeDelta >= hour_second)
       return `${Math.floor(timeDelta/hour_second)}시간 전`;
-    if(timeDelta > minute_second)
+    if(timeDelta >= minute_second)
       return `${Math.floor(timeDelta/minute_second)}분 전`;
-    else
-      return `${Math.floor(timeDelta)}초 전`; 
+    return "방금 전"; 
   }
 const CommentItem = ({ 
   comment, 
@@ -67,8 +64,8 @@ const CommentItem = ({
   const isMyComment = comment.user_id === currentUserId;
   const isDeleted = comment.user_id === null || comment.content === "[삭제된 댓글입니다]";
   const isWithdrawnUser = comment.username === "탈퇴한 회원";
-  const canDelete = (isMyComment || isAdmin) && !isDeleted;
-  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 관리자도 본인 댓글만 수정 가능
+  const canDelete = isMyComment && !isDeleted; // 본인 댓글만 삭제 가능
+  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 본인 댓글만 수정 가능
   const isEditing = editingCommentId === comment.comment_id;
   const isEdited = comment.updated_at && comment.created_at !== comment.updated_at;
 
@@ -570,8 +567,8 @@ export default function ChatPage() {
     }
   };
 
-  // 호스트 또는 관리자 확인
-  const isHostOrAdmin = me && (podDetail?.host_user_id === me.user_id || me.is_admin);
+  // 호스트만 수정/삭제 가능
+  const isHost = me && podDetail?.host_user_id === me.user_id;
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
   if (meLoading || messageLoading || podDetailLoading) {
@@ -601,7 +598,7 @@ export default function ChatPage() {
       <div className="flex flex-col gap-8 py-8">
         <div className="flex flex-row justify-between items-center">
           <div className="text-3xl font-black">{podDetail.title}</div>
-          {isHostOrAdmin && (
+          {isHost && (
             <div className="flex flex-row gap-2">
               <button
                 onClick={handleOpenEditPodModal}

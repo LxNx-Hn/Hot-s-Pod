@@ -12,7 +12,7 @@ class CommentCreateRequest(BaseModel):
 class CommentResponse(BaseModel):
     comment_id: int
     pod_id: int
-    user_id: int
+    user_id: Optional[int] = None  # 삭제된 댓글은 NULL
     content: str
     parent_comment_id: Optional[int]
     created_at: datetime

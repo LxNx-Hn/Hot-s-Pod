@@ -22,6 +22,9 @@ class UserCommandRepository:
     
     def update_user(self, user_id: int, update_data: dict) -> bool:
         """사용자 정보 업데이트 (본인만 가능)"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         with self.db.cursor() as cursor:
             update_fields = []
             values = []
@@ -35,12 +38,16 @@ class UserCommandRepository:
             if 'profile_picture_enabled' in update_data:
                 update_fields.append("profile_picture_enabled = %s")
                 values.append(update_data['profile_picture_enabled'])
+                logger.info(f"프로필 사진 설정 변경: user_id={user_id}, enabled={update_data['profile_picture_enabled']}")
             
             if not update_fields:
                 return False
             
             values.append(user_id)
             sql = f"UPDATE user SET {', '.join(update_fields)} WHERE user_id = %s"
+            logger.info(f"Update SQL: {sql}, values: {values}")
             cursor.execute(sql, values)
             self.db.commit()
-            return cursor.rowcount > 0
+            affected_rows = cursor.rowcount
+            logger.info(f"Affected rows: {affected_rows}")
+            return affected_rows > 0
