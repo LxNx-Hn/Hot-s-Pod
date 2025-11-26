@@ -284,7 +284,7 @@ export default function ChatPage() {
       username: me.username,
       profile_picture: me.profile_picture,
       content,
-      created_at: now,
+      created_at: new Date().toISOString(),
       parent_comment_id: parentCommentId,
     };
 

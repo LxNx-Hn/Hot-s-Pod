@@ -96,6 +96,14 @@ class RagService: #친절한 주석 < -RAG서비스
             category_id=found_category_id
         )
         
+        logger.info(f"\n=== RDB 필터링 결과 ===")
+        logger.info(f"Input: {len(retrieved_pod_ids)} candidates (POD IDs: {retrieved_pod_ids})")
+        logger.info(f"Filters: Place={place_keyword}, Category={found_category_id}, event_time > NOW()")
+        logger.info(f"Output: {len(final_pods)} pods after filtering")
+        if len(retrieved_pod_ids) > 0 and len(final_pods) == 0:
+            logger.warning("⚠️ RDB 필터링에서 모든 POD가 제외됨!")
+            logger.warning("   → 가능한 원인: 1) event_time이 과거 2) place/category 불일치 3) 삭제된 POD")
+        
         logger.info(f"\n=== 최종 결과 ===")
         logger.info(f"Final results: {len(final_pods)} pods")
         for pod in final_pods:
