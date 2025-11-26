@@ -43,7 +43,7 @@ export default function SearchPresenter({ query, setQuery, onSearch,
         else if(podData.total_found == 0)
         {
             return (
-            <div className="flex flex-row justify-start bg-white rounded-xl p-4 w-fit max-w-48">
+            <div className="flex flex-row justify-start bg-white rounded-xl p-4 w-fit max-w-sm break-words">
                 <div className="flex flex-col gap-2">
                     {podData.llm_answer}
                 </div>
@@ -52,7 +52,7 @@ export default function SearchPresenter({ query, setQuery, onSearch,
         else
         {
             return (
-            <div className="flex flex-row justify-start bg-white rounded-xl p-4 w-fit max-w-48">
+            <div className="flex flex-row justify-start bg-white rounded-xl p-4 w-fit max-w-sm">
                 <div className="flex flex-col gap-2">
                 당신이 찾은 팟은
                 {podData.retrieved_pods && Array.isArray(podData.retrieved_pods) && podData.retrieved_pods.map((pod, idx)=>{

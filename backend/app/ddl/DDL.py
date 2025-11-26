@@ -259,9 +259,15 @@ BEGIN
         p.`content`,
         p.`min_peoples`,
         p.`max_peoples`,
+        (SELECT COUNT(*) FROM `pod_member` pm WHERE pm.`pod_id` = p.`pod_id`) AS `current_member`,
         p.`created_at`,
         p.`updated_at`,
-        u.`username` AS `host_username`
+        u.`username` AS `host_username`,
+        (
+            SELECT JSON_ARRAYAGG(cl.`category_id`)
+            FROM `categorylink` cl
+            WHERE cl.`pod_id` = p.`pod_id`
+        ) AS `category_ids`
     FROM `pod` p
     JOIN `user` u ON p.`host_user_id` = u.`user_id`
     WHERE p.`pod_id` IN (
