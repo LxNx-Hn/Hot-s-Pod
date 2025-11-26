@@ -27,9 +27,13 @@ class RagService: #친절한 주석 < -RAG서비스
         sorted_categories = sorted(all_categories, key=lambda x: -len(x['category_name']))
         found_category_id = None
         for cat in sorted_categories:
-            if cat['category_name'] in query:
-                found_category_id = cat['category_id'] #이거까지는 규칙기반 매핑이에요. 왜? 금쪽이 사용자가 선택하니까!
-                logger.info(f"Matched category: {cat['category_name']} (ID: {cat['category_id']})")
+            # Skip empty or null category names to avoid matching empty string (which is in every query)
+            cat_name = cat.get('category_name') or ''
+            if not cat_name.strip():
+                continue
+            if cat_name in query:
+                found_category_id = cat['category_id']
+                logger.info(f"Matched category: {cat_name} (ID: {cat['category_id']})")
                 break
         place_keyword = None
         for keyword in settings.PLACE_KEYWORDS: #이거 CONFIG에 있는 키워드 사전인데, 규칙기반 매핑하고 시작하면 진짜 개빨라서 채택함

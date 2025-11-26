@@ -69,7 +69,7 @@ export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPod
                         {pods&&pods.map((pod, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={() => onPodClick && onPodClick(idx + 1)}
+                                onClick={() => onPodClick && onPodClick(pod.pod_id)}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
                                 <img className='w-full h-24 rounded-t-lg' src={imageData[pod&&pod.category_ids?pod.category_ids[0]:0]}/>

@@ -18,12 +18,13 @@ export default function SearchContainer() {
   const onSendRAG = async() => {
     if(RAGquery==="")
       return;
-    setRAGMessages([...RAGMessages,{llm_answer:'me',content:RAGquery}])
+    // Use functional updates to avoid stale-state and duplicate entries
+    setRAGMessages((prev) => [...prev, { llm_answer: 'me', content: RAGquery }]);
     const response = await fetchRAG({
-            user_id:data.user_id,
-            query:RAGquery
-        });
-    setRAGMessages([...RAGMessages,{llm_answer:'me',content:RAGquery},response]);
+      user_id: data.user_id,
+      query: RAGquery,
+    });
+    setRAGMessages((prev) => [...prev, response]);
   };
 
   const handleChange = (event) => {

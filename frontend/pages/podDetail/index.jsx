@@ -248,10 +248,10 @@ export default function ChatPage() {
         // 2) WS가 닫혀 있으면 REST fallback
         await dispatch(
           sendChatMessage({
-            type:"user",
+            type: "user",
             pod_id: parseInt(podId, 10),
             user_id: me?.user_id ?? 0,
-            message: messageText,
+            content: messageText,
           })
         ).unwrap();
       }
@@ -287,13 +287,25 @@ export default function ChatPage() {
   // 댓글 작성
   const handleSendComment = async () => {
     try {
+        if (!me || !me.user_id) {
+          alert('로그인이 필요합니다.');
+          return;
+        }
+
+        // parent_comment_id가 현재 로컬 comment 목록에 존재하는지 확인
+        const parentId = current_comments.some(c => c.comment_id === selectedCommentId)
+          ? selectedCommentId
+          : null;
+
         await dispatch(createComment({
-          "pod_id":podId,
-          "user_id":me?.user_id,
-          "content":commentText,
-          "parent_comment_id":selectedCommentId
+          pod_id: parseInt(podId, 10),
+          user_id: me.user_id,
+          content: commentText,
+          parent_comment_id: parentId,
         })).unwrap();
-        addLocalComment(commentText,selectedCommentId);
+
+        // 서버 상태를 신뢰하기 위해 상세를 다시 조회합니다 (중복 로컬 삽입 방지)
+        await refetchPodDetail();
         setCommentText("");
     } catch (error) {
         alert('댓글 생성에 실패했습니다: ' + error.message);
