@@ -125,7 +125,7 @@ async def kakao_callback(
         raise HTTPException(status_code=500, detail="서버 오류가 발생했습니다.")
 
 @router.post("/refresh")
-async def refresh_token(request: Request, response: Response):
+async def refresh_token(request: Request, response: Response, db: Connection = Depends(get_db_connection)):
     cookie = request.cookies.get("refresh_token")
     if not cookie:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
@@ -138,8 +138,18 @@ async def refresh_token(request: Request, response: Response):
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid payload")
 
+    # DB에서 최신 is_admin 상태 조회
+    from app.utils.permissions import is_admin as check_is_admin
+    is_admin_status = check_is_admin(db, user_id)
+    
+    # username도 함께 조회
+    with db.cursor() as cursor:
+        cursor.execute("SELECT username FROM user WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        username = result['username'] if result else None
+
     new_access = create_access_token(
-        data={"user_id": user_id},
+        data={"user_id": user_id, "username": username, "is_admin": is_admin_status},
         expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE)

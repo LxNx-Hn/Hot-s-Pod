@@ -16,6 +16,7 @@ class UserResponse(BaseModel):
     username: str
     phonenumber: Optional[str]
     profile_picture: str
+    is_admin: bool = False
     created_at: datetime
 
     class Config:

@@ -33,9 +33,11 @@ CREATE TABLE `user` (
   `user_id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(100) NOT NULL,
   `phonenumber` VARCHAR(20) NULL,
+  `is_admin` BOOLEAN NOT NULL DEFAULT FALSE,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
-  INDEX `IDX_User_username` (`username`)
+  INDEX `IDX_User_username` (`username`),
+  INDEX `IDX_User_admin` (`is_admin`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `kakaoapi` (
