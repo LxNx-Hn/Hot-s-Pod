@@ -114,7 +114,10 @@ class RagService: #친절한 주석 < -RAG서비스
         for i, pod in enumerate(context_pods[:5], 1):
             context_str += f"[{i}번]\n"
             context_str += f"- 제목: {pod['title']}\n"
-            context_str += f"- 장소: {pod['place']}\n"
+            place_info = pod.get('place_detail', '')
+            if pod.get('place'):
+                place_info = f"{pod['place']} {place_info}"
+            context_str += f"- 장소: {place_info}\n"
             context_str += f"- 일시: {pod['event_time']}\n\n"
         
         return self._generate_with_local_llm(query, context_str)

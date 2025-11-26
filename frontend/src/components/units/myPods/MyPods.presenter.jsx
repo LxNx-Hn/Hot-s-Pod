@@ -86,7 +86,7 @@ export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPod
                                     </div>
                                     <div className='flex flex-row gap-1'>
                                         <SizeComponent Component={PlaceOutlinedIcon} fontSize={16}/>
-                                        <div className="text-xs text-gray-400">{pod.place}</div>
+                                        <div className="text-xs text-gray-400">{pod.place_detail}{pod.place && ` (${pod.place})`}</div>
                                     </div>
                                 </div>
                             </div>

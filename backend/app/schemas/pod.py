@@ -26,7 +26,8 @@ class PodMember(BaseModel):
 class PodCreateRequest(BaseModel):
     host_user_id: int
     event_time: datetime
-    place: str = Field(..., max_length=255)
+    place: Optional[str] = Field(None, max_length=255)
+    place_detail: str = Field(..., max_length=255)
     title: str = Field(..., max_length=255)
     content: Optional[str] = None
     min_peoples: int
@@ -37,7 +38,8 @@ class PodResponse(BaseModel):
     pod_id: int
     host_user_id: int
     event_time: datetime
-    place: str
+    place: Optional[str]
+    place_detail: str
     title: str
     content: Optional[str]
     min_peoples: int
@@ -52,7 +54,8 @@ class PodListResponse(BaseModel):
     pod_id: int
     host_user_id: int
     event_time: datetime
-    place: str
+    place: Optional[str]
+    place_detail: str
     title: str
     content: Optional[str]
     min_peoples: int
@@ -68,7 +71,8 @@ class PodDetailResponse(BaseModel):
     pod_id: int
     host_user_id: int
     event_time: datetime
-    place: str
+    place: Optional[str]
+    place_detail: str
     title: str
     content: Optional[str]
     min_peoples: int

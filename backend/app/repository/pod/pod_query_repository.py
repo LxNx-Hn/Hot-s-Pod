@@ -168,6 +168,7 @@ class PodQueryRepository:
                 p.title   LIKE %s
             OR p.content LIKE %s
             OR p.place   LIKE %s
+            OR p.place_detail LIKE %s
             OR EXISTS (
                     SELECT 1
                     FROM categorylink cl3
@@ -180,7 +181,7 @@ class PodQueryRepository:
             ORDER BY p.event_time DESC
             LIMIT %s OFFSET %s;
             """
-            cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
+            cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
             response = cursor.fetchall()
             for i in response:
                 i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []

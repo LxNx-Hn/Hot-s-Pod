@@ -99,10 +99,24 @@ if settings.FRONTEND_URL and settings.FRONTEND_URL not in cors_origins:
 if settings.VITE_API_BASE_URL and settings.VITE_API_BASE_URL not in cors_origins:
     cors_origins.append(settings.VITE_API_BASE_URL)
 
+# KAKAO_REDIRECT_URI에서 RunPod 도메인 추출
+if settings.KAKAO_REDIRECT_URI:
+    from urllib.parse import urlparse
+    parsed = urlparse(settings.KAKAO_REDIRECT_URI)
+    runpod_origin = f"{parsed.scheme}://{parsed.netloc}"
+    if runpod_origin not in cors_origins:
+        cors_origins.append(runpod_origin)
+        logger.info(f"Added RunPod origin from KAKAO_REDIRECT_URI: {runpod_origin}")
+
 # CORS_ORIGINS 환경변수가 있으면 파싱해서 추가
 if settings.CORS_ORIGINS:
     for origin in settings.CORS_ORIGINS.split(","):
         origin = origin.strip()
+        if origin == "*":
+            # * 는 allow_origins 배열에 넣을 수 없으므로 별도 처리
+            logger.warning("CORS_ORIGINS=* detected. This is NOT recommended for production!")
+            cors_origins = ["*"]
+            break
         if origin and origin not in cors_origins:
             cors_origins.append(origin)
 

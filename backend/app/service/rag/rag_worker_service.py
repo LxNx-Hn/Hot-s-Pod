@@ -70,7 +70,7 @@ class RagWorkerService:
         text_to_embed = ( #벡터화할 텍스트 구성 
             f"제목: {pod_details.get('title', '')}\n"
             f"내용: {pod_details.get('content', '')}\n"
-            f"장소: {pod_details.get('place', '')}\n"
+            f"장소: {pod_details.get('place', '')} {pod_details.get('place_detail', '')}\n"
             f"날짜: {pod_details.get('event_time', '')}\n"
             f"정원: {pod_details.get('min_peoples', '')}~{pod_details.get('max_peoples', '')}명\n"
             f"카테고리: {pod_details.get('categories', '')}"

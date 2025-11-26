@@ -399,7 +399,7 @@ export default function ChatPage() {
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2">
             <SizeComponent Component={PlaceOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
-            <div className="flex flex-col justify-center font-semibold">{podDetail.place}</div>
+            <div className="flex flex-col justify-center font-semibold">{podDetail.place_detail}{podDetail.place && ` (${podDetail.place})`}</div>
           </div>
           <div className="flex flex-row gap-2">
             <SizeComponent Component={AccessTimeOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
@@ -441,8 +441,8 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-      {/* 채팅 메시지 영역 */}
-      <div className={`fixed left-0 top-0 bg-black bg-opacity-50 w-full h-full ${isChatOpened?"":"hidden"}`}>
+      {/* 채팅 메시지 영역 (참여자만 접근 가능) */}
+      <div className={`fixed left-0 top-0 bg-black bg-opacity-50 w-full h-full ${(isChatOpened && isMyPod)?"":"hidden"}`}>
         
         <div className="flex flex-col justify-between h-full">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -542,7 +542,9 @@ export default function ChatPage() {
           >
             참여하기
           </div>}
-          <div className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" onClick={()=>{setIsChatOpened(true)}}>채팅 열기</div>
+          {isMyPod && (
+            <div className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" onClick={()=>{setIsChatOpened(true)}}>채팅 열기</div>
+          )}
         </div>
         
       </div>

@@ -15,6 +15,7 @@ class PodCommandRepository:
                 pod_data.host_user_id,
                 pod_data.event_time,
                 pod_data.place,
+                pod_data.place_detail,
                 pod_data.title,
                 pod_data.content,
                 pod_data.min_peoples,
@@ -26,12 +27,9 @@ class PodCommandRepository:
             
             if result:
                 new_id = result['pod_id']
-                # 자동으로 호스트를 팟 멤버로 추가합니다.
                 try:
-                    # join_pod expects (pod_id, user_id)
                     self.join_pod(new_id, pod_data.host_user_id)
                 except Exception:
-                    # 멤버 추가 실패가 전체 생성 실패로 이어지지 않도록 로그만 남깁니다.
                     pass
                 return new_id
             raise Exception("Failed to create pod")
