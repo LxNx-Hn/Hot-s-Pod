@@ -107,9 +107,11 @@ async def kakao_callback(
         # 5) 쿠키 + 리다이렉트
         redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?ok=1"
         resp = RedirectResponse(url=redirect_url, status_code=302)
-        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE)
-        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE)
-        print("[oauth] set cookies & redirect ->", redirect_url)
+        # COOKIE_DOMAIN이 설정되어 있으면 크로스 도메인 쿠키 설정
+        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
+        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
+        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
+        print(f"[oauth] set cookies (domain={cookie_domain}) & redirect -> {redirect_url}")
         return resp
 
     except requests.exceptions.RequestException as e:
@@ -139,7 +141,8 @@ async def refresh_token(request: Request, response: Response):
         data={"user_id": user_id},
         expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE)
+    cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
+    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
     return {"ok": True}
 
 

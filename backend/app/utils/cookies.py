@@ -1,5 +1,6 @@
 # app/utils/cookies.py
 from fastapi import Response
+from typing import Optional
 
 # 로컬 개발용 기본값 (배포 시: SAMESITE="None", SECURE=True 권장)
 SAMESITE_DEFAULT = "None"   # 프론트/백 오리진이 다르면 "None"
@@ -13,16 +14,22 @@ def set_access_cookie(
     samesite: str = SAMESITE_DEFAULT,
     secure: bool = SECURE_DEFAULT,
     path: str = "/",
+    domain: Optional[str] = None,
 ):
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=secure,
-        samesite=samesite,
-        path=path,
-        max_age=max_age,
-    )
+    cookie_params = {
+        "key": "access_token",
+        "value": token,
+        "httponly": True,
+        "secure": secure,
+        "samesite": samesite,
+        "path": path,
+        "max_age": max_age,
+    }
+    # domain이 지정되면 추가 (크로스 도메인 쿠키 공유용)
+    if domain:
+        cookie_params["domain"] = domain
+    
+    response.set_cookie(**cookie_params)
 
 def set_refresh_cookie(
     response: Response,
@@ -32,16 +39,22 @@ def set_refresh_cookie(
     samesite: str = SAMESITE_DEFAULT,
     secure: bool = SECURE_DEFAULT,
     path: str = "/oauth/refresh",
+    domain: Optional[str] = None,
 ):
-    response.set_cookie(
-        key="refresh_token",
-        value=token,
-        httponly=True,
-        secure=secure,
-        samesite=samesite,
-        path=path,
-        max_age=days * 24 * 3600,
-    )
+    cookie_params = {
+        "key": "refresh_token",
+        "value": token,
+        "httponly": True,
+        "secure": secure,
+        "samesite": samesite,
+        "path": path,
+        "max_age": days * 24 * 3600,
+    }
+    # domain이 지정되면 추가 (크로스 도메인 쿠키 공유용)
+    if domain:
+        cookie_params["domain"] = domain
+    
+    response.set_cookie(**cookie_params)
 
 def clear_auth_cookies(response: Response):
     response.delete_cookie("access_token", path="/")

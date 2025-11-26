@@ -1,7 +1,7 @@
 # app/schemas/rag.py
 from pydantic import BaseModel, Field
 from typing import List
-from app.schemas.pod import PodResponse
+from app.schemas.pod import PodListResponse
 from typing import Optional
 
 class RagSearchRequest(BaseModel):
@@ -10,5 +10,5 @@ class RagSearchRequest(BaseModel):
 
 class RagSearchResponse(BaseModel):
     llm_answer: str
-    retrieved_pods: List[PodResponse]
+    retrieved_pods: List[PodListResponse]
     total_found: int

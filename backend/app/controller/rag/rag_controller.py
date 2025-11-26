@@ -6,7 +6,7 @@ from app.database import get_db_connection
 from app.repository.rag.rag_query_repository import RagQueryRepository
 from app.service.rag.rag_service import RagService
 from app.schemas.rag import RagSearchRequest, RagSearchResponse
-from app.schemas.pod import PodResponse
+from app.schemas.pod import PodListResponse
 from app.core.config import settings
 
 router = APIRouter(prefix="/rag", tags=["RAG Search"])
@@ -45,7 +45,7 @@ async def search_pods_with_rag(
         # Repository를 명시적으로 전달 (필수 파라미터)
         retrieved_pods_data = rag_service.search(request.query, rag_query_repo)
         llm_answer = rag_service.generate_answer(request.query, retrieved_pods_data)      
-        retrieved_pods = [PodResponse(**pod) for pod in retrieved_pods_data]
+        retrieved_pods = [PodListResponse(**pod) for pod in retrieved_pods_data]
         return RagSearchResponse(
             llm_answer=llm_answer,
             retrieved_pods=retrieved_pods,
