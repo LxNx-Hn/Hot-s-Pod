@@ -154,6 +154,8 @@ class PodQueryRepository:
                 i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []
             return response
     def find_pods_by_query(self, query, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
+        search_pattern = f'%{query}%'
+        
         with self.db.cursor() as cursor:
             sql = """
             SELECT 
@@ -183,23 +185,23 @@ class PodQueryRepository:
                 ON p.host_user_id = u.user_id
 
             WHERE
-                p.title   LIKE %s
-            OR p.content LIKE %s
-            OR p.place   LIKE %s
-            OR p.place_detail LIKE %s
-            OR EXISTS (
+                p.title LIKE %s
+                OR p.content LIKE %s
+                OR p.place LIKE %s
+                OR p.place_detail LIKE %s
+                OR EXISTS (
                     SELECT 1
                     FROM categorylink cl3
                     JOIN category c3 
                         ON c3.category_id = cl3.category_id
                     WHERE cl3.pod_id = p.pod_id
-                    AND c3.category_name LIKE %s
-            )
+                      AND c3.category_name LIKE %s
+                )
 
             ORDER BY p.event_time DESC
             LIMIT %s OFFSET %s;
             """
-            cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
+            cursor.execute(sql, (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, limit, offset))
             response = cursor.fetchall()
             for i in response:
                 i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []

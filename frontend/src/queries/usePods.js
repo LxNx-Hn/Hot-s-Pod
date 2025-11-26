@@ -9,13 +9,13 @@ const getPods = async ({ limit = 20, offset = 0 }) => {
 const searchPods = async ({ query, limit = 20, offset = 0 }) => {
   try{
     if(query===undefined||query==="")
-      return;
+      return [];
     const res = await api.get("/pods/search", { params: { query, limit, offset } });
     return res.data;
   }
   catch(e)
   {
-    return;
+    return [];
   }
 };
 
@@ -38,12 +38,11 @@ export function usePodSearch({
   limit = 100,
   offset = 0,
 }) {
-  const enabled = typeof query === "string" && query.trim().length > 0;
   return useQuery({
     queryKey: ["podsSearch", query, limit, offset],
     queryFn: () => searchPods({ query, limit, offset }),
     staleTime: 10_000,
-    enabled,
+    enabled: typeof query === "string" && query.trim().length > 0,
   });
 }
 export function usePodDetail(pod_id) {
