@@ -10,9 +10,11 @@ class CommentQueryRepository:
         """댓글 조회"""
         with self.db.cursor() as cursor:
             sql = """
-                SELECT c.*, u.username
+                SELECT c.*, 
+                       COALESCE(u.username, '탈퇴한 회원') as username,
+                       u.user_id as original_user_id
                 FROM comment c
-                JOIN user u ON c.user_id = u.user_id
+                LEFT JOIN user u ON c.user_id = u.user_id
                 WHERE c.comment_id = %s
             """
             cursor.execute(sql, (comment_id,))
@@ -22,9 +24,11 @@ class CommentQueryRepository:
         """특정 Pod의 모든 댓글 조회"""
         with self.db.cursor() as cursor:
             sql = """
-                SELECT c.*, u.username
+                SELECT c.*, 
+                       COALESCE(u.username, '탈퇴한 회원') as username,
+                       u.user_id as original_user_id
                 FROM comment c
-                JOIN user u ON c.user_id = u.user_id
+                LEFT JOIN user u ON c.user_id = u.user_id
                 WHERE c.pod_id = %s
                 ORDER BY c.created_at ASC
             """

@@ -74,3 +74,26 @@ async def update_my_profile(
         raise HTTPException(status_code=500, detail="프로필 수정에 실패했습니다")
     
     return {"message": "프로필이 성공적으로 수정되었습니다"}
+
+@router.delete("/me", response_model=dict)
+async def delete_my_account(
+    request: Request,
+    db: Connection = Depends(get_db_connection),
+    service: UserService = Depends(get_user_service)
+):
+    """현재 로그인한 사용자 탈퇴 (본인만 가능)"""
+    user_payload = get_user_from_token(request)
+    user_id = user_payload.get('user_id')
+    
+    # 사용자 삭제
+    with db.cursor() as cursor:
+        # 1. kakaoapi 레코드 삭제 (CASCADE로 자동 삭제됨)
+        # 2. user 레코드 삭제
+        sql = "DELETE FROM user WHERE user_id = %s"
+        cursor.execute(sql, (user_id,))
+        db.commit()
+        
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    
+    return {"message": "회원 탈퇴가 완료되었습니다"}

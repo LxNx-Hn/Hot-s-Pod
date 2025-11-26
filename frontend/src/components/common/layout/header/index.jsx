@@ -1,14 +1,22 @@
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from '../../../../api/logout';
 
 export default function HeaderLayout(props) {
     const navigate = useNavigate();
     const userName = useSelector((state) => state.user?.userName);
     
-    const handleLogout = () => {
-        localStorage.removeItem('access_token');
-        navigate('/');
-        window.location.reload();
+    const handleLogout = async () => {
+        try {
+            await LogOut(); // 백엔드 API 호출하여 쿠키 제거
+            localStorage.removeItem('access_token');
+            navigate('/login');
+        } catch (error) {
+            console.error('로그아웃 실패:', error);
+            // 실패해도 로컬 데이터 제거하고 로그인 페이지로
+            localStorage.removeItem('access_token');
+            navigate('/login');
+        }
     };
 
     return (

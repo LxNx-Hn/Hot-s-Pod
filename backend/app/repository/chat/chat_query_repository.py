@@ -16,9 +16,9 @@ class ChatQueryRepository:
         with self.db.cursor() as cursor:
             if before_chat_id:
                 sql = """
-                    SELECT c.*, u.username
+                    SELECT c.*, COALESCE(u.username, '탈퇴한 회원') as username
                     FROM chat c
-                    JOIN user u ON c.user_id = u.user_id
+                    LEFT JOIN user u ON c.user_id = u.user_id
                     WHERE c.pod_id = %s AND c.chat_id < %s
                     ORDER BY c.time DESC
                     LIMIT %s
@@ -26,9 +26,9 @@ class ChatQueryRepository:
                 cursor.execute(sql, (pod_id, before_chat_id, limit))
             else:
                 sql = """
-                    SELECT c.*, u.username
+                    SELECT c.*, COALESCE(u.username, '탈퇴한 회원') as username
                     FROM chat c
-                    JOIN user u ON c.user_id = u.user_id
+                    LEFT JOIN user u ON c.user_id = u.user_id
                     WHERE c.pod_id = %s
                     ORDER BY c.time DESC
                     LIMIT %s

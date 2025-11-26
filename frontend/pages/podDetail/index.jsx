@@ -1,4 +1,3 @@
-// frontend/src/pages/chat/index.jsx
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,6 +14,7 @@ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SizeComponent from "../../src/components/common/icon/SizeComponent";
 import { createComment } from "@redux/slices/commentSlice.js";
+import AddPodContainer from "../../src/components/common/modals/AddPod/AddPodContainer.jsx";
 
 const getIndentClass = (level) => {
   if (level === 0) return "";
@@ -26,7 +26,7 @@ import { toSeoulDate, formatSeoul } from "../../src/utils/time";
 
 const time_delta_string = (string_time) => {
   const createdAt = toSeoulDate(string_time);
-  const now = new Date(); // 현재 로컬 시간 사용 (KST 변환 불필요)
+  const now = toSeoulDate(new Date()); // toSeoulDate로 통일
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
@@ -48,31 +48,56 @@ const time_delta_string = (string_time) => {
     else
       return `${Math.floor(timeDelta)}초 전`; 
   }
-const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null, onDeleteComment, currentUserId, isAdmin }) => {
+const CommentItem = ({ 
+  comment, 
+  setSelectedCommentId, 
+  level = 0, 
+  selectedId = null, 
+  onDeleteComment, 
+  onEditComment, 
+  editingCommentId,
+  editingCommentText,
+  onSaveEdit,
+  onCancelEdit,
+  onEditTextChange,
+  currentUserId, 
+  isAdmin 
+}) => {
   const indentClass = getIndentClass(level);
   const isMyComment = comment.user_id === currentUserId;
   const isDeleted = comment.user_id === null || comment.content === "[삭제된 댓글입니다]";
+  const isWithdrawnUser = comment.username === "탈퇴한 회원";
   const canDelete = (isMyComment || isAdmin) && !isDeleted;
+  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser;
+  const isEditing = editingCommentId === comment.comment_id;
 
   return (
     <div
       className={`flex flex-col gap-2 w-full ${indentClass}`}
     >
       
-      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"} ${isDeleted ? 'opacity-60' : ''}`} onClick={()=>{!isDeleted && setSelectedCommentId(comment.comment_id)}}>
+      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"} ${isDeleted || isWithdrawnUser ? 'opacity-60' : ''}`} onClick={()=>{!isDeleted && !isEditing && !isWithdrawnUser && setSelectedCommentId(comment.comment_id)}}>
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-2">
             <img
-              src={isDeleted ? "https://via.placeholder.com/32" : comment.profile_picture}
+              src={(isDeleted || isWithdrawnUser) ? "https://via.placeholder.com/32" : comment.profile_picture}
               className="w-8 h-8 rounded-full"
             />
-            <div className="font-bold flex flex-col justify-center">{isDeleted ? "삭제된 사용자" : comment.username}</div>
+            <div className="font-bold flex flex-col justify-center">{isDeleted ? "삭제된 사용자" : (isWithdrawnUser ? "탈퇴한 회원" : comment.username)}</div>
           </div>
           <div className="flex flex-row gap-2 items-center">
             <div className="text-xs text-[#888888]">
               {time_delta_string(comment.created_at)}
             </div>
-            {canDelete && (
+            {!isEditing && canEdit && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onEditComment(comment); }}
+                className="text-xs text-blue-500 hover:text-blue-700 px-2 py-1"
+              >
+                수정
+              </button>
+            )}
+            {!isEditing && canDelete && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onDeleteComment(comment.comment_id); }}
                 className="text-xs text-red-500 hover:text-red-700 px-2 py-1"
@@ -82,7 +107,32 @@ const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = nu
             )}
           </div>
         </div>
-        <p className="w-full">{comment.content}</p>
+        {isEditing ? (
+          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={editingCommentText}
+              onChange={(e) => onEditTextChange(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              rows="3"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => onSaveEdit(comment.comment_id)}
+                className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+              >
+                저장
+              </button>
+              <button
+                onClick={onCancelEdit}
+                className="px-3 py-1 bg-gray-300 rounded-md hover:bg-gray-400 text-sm"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="w-full">{comment.content}</p>
+        )}
       </div>
       {/* 자식 댓글들 */}
       {comment.children?.length > 0 && (
@@ -95,6 +145,12 @@ const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = nu
               level={level + 1}
               selectedId={selectedId}
               onDeleteComment={onDeleteComment}
+              onEditComment={onEditComment}
+              editingCommentId={editingCommentId}
+              editingCommentText={editingCommentText}
+              onSaveEdit={onSaveEdit}
+              onCancelEdit={onCancelEdit}
+              onEditTextChange={onEditTextChange}
               currentUserId={currentUserId}
               isAdmin={isAdmin}
             />
@@ -119,6 +175,10 @@ export default function ChatPage() {
   const [selectedCommentId, setSelectedCommentId] = useState(null);
   const [isMyPod, setIsMyPod] = useState(false);
   const [isChatOpened, setIsChatOpened] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [isEditPodModalOpen, setIsEditPodModalOpen] = useState(false);
+  
   const handleSelectedCommentId = (comment_id) => {
     if(selectedCommentId==comment_id)
       setSelectedCommentId(null);
@@ -402,6 +462,43 @@ export default function ChatPage() {
     }
   };
 
+  // 댓글 수정 시작
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.comment_id);
+    setEditingCommentText(comment.content);
+  };
+
+  // 댓글 수정 취소
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+
+  // 댓글 수정 저장
+  const handleSaveEdit = async (commentId) => {
+    if (!editingCommentText.trim()) {
+      alert('댓글 내용을 입력하세요.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/comments/${commentId}?content=${encodeURIComponent(editingCommentText)}`, {
+        method: 'PUT',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        await refetchPodDetail();
+        setEditingCommentId(null);
+        setEditingCommentText("");
+      } else {
+        throw new Error('수정 실패');
+      }
+    } catch (error) {
+      alert('댓글 수정에 실패했습니다.');
+    }
+  };
+
   // Pod 삭제
   const handleDeletePod = async () => {
     if (!confirm('정말로 이 POD를 삭제하시겠습니까?')) return;
@@ -420,6 +517,41 @@ export default function ChatPage() {
       }
     } catch (error) {
       alert('POD 삭제에 실패했습니다: ' + error.message);
+    }
+  };
+
+  // Pod 수정 모달 열기
+  const handleOpenEditPodModal = () => {
+    setIsEditPodModalOpen(true);
+  };
+
+  // Pod 수정 모달 닫기
+  const handleCloseEditPodModal = () => {
+    setIsEditPodModalOpen(false);
+  };
+
+  // Pod 수정 저장
+  const handleUpdatePod = async (podData) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pods/${podId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(podData),
+      });
+
+      if (response.ok) {
+        alert('POD가 수정되었습니다.');
+        await refetchPodDetail();
+        setIsEditPodModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '수정 권한이 없습니다.');
+      }
+    } catch (error) {
+      alert('POD 수정에 실패했습니다: ' + error.message);
     }
   };
 
@@ -455,12 +587,20 @@ export default function ChatPage() {
         <div className="flex flex-row justify-between items-center">
           <div className="text-3xl font-black">{podDetail.title}</div>
           {isHostOrAdmin && (
-            <button
-              onClick={handleDeletePod}
-              className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
-            >
-              삭제
-            </button>
+            <div className="flex flex-row gap-2">
+              <button
+                onClick={handleOpenEditPodModal}
+                className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                수정
+              </button>
+              <button
+                onClick={handleDeletePod}
+                className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+              >
+                삭제
+              </button>
+            </div>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -506,6 +646,12 @@ export default function ChatPage() {
                       setSelectedCommentId={handleSelectedCommentId} 
                       selectedId={selectedCommentId}
                       onDeleteComment={handleDeleteComment}
+                      onEditComment={handleEditComment}
+                      editingCommentId={editingCommentId}
+                      editingCommentText={editingCommentText}
+                      onSaveEdit={handleSaveEdit}
+                      onCancelEdit={handleCancelEdit}
+                      onEditTextChange={setEditingCommentText}
                       currentUserId={me?.user_id}
                       isAdmin={me?.is_admin || false}
                     />
@@ -630,6 +776,14 @@ export default function ChatPage() {
         
       </div>
 
+      {/* Pod 수정 모달 */}
+      <AddPodContainer 
+        isOpen={isEditPodModalOpen}
+        onClose={handleCloseEditPodModal}
+        onSave={handleUpdatePod}
+        initialData={podDetail}
+        isEditMode={true}
+      />
       
     </div>
   );

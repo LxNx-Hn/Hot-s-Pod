@@ -56,6 +56,7 @@ export default function MyPageUI() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editUsername, setEditUsername] = useState("");
     const [editPhoneNumber, setEditPhoneNumber] = useState("");
+    const [profilePictureEnabled, setProfilePictureEnabled] = useState(true);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { data: podsData, isLoading: podLoading, isError: isPodError } = usePodMe(data?.user_id);
@@ -72,6 +73,7 @@ export default function MyPageUI() {
     const handleOpenEditModal = () => {
         setEditUsername(data?.username || "");
         setEditPhoneNumber(data?.phonenumber || "");
+        setProfilePictureEnabled(data?.profile_picture_enabled ?? true);
         setIsEditModalOpen(true);
     };
 
@@ -87,7 +89,8 @@ export default function MyPageUI() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: editUsername,
-                    phonenumber: editPhoneNumber
+                    phonenumber: editPhoneNumber,
+                    profile_picture_enabled: profilePictureEnabled
                 })
             });
             
@@ -115,9 +118,40 @@ export default function MyPageUI() {
             }
         };
     const logOut = async() => {
-        await LogOut();
-        navigate("/login");
+        try {
+            await LogOut();
+            localStorage.removeItem('access_token');
+            navigate("/login");
+        } catch (error) {
+            console.error('로그아웃 실패:', error);
+            localStorage.removeItem('access_token');
+            navigate("/login");
+        }
     }
+    
+    const handleDeleteAccount = async() => {
+        if (!confirm('정말로 회원 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구할 수 없습니다.')) return;
+        
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/me`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            
+            if (response.ok) {
+                await LogOut();
+                localStorage.removeItem('access_token');
+                alert('회원 탈퇴가 완료되었습니다.');
+                navigate("/login");
+            } else {
+                throw new Error('탈퇴 실패');
+            }
+        } catch (error) {
+            console.error('회원 탈퇴 실패:', error);
+            alert('회원 탈퇴에 실패했습니다.');
+        }
+    }
+    
     const handleClickPod = async(pod_id) => {
         navigate(`/podDetail/${pod_id}`)
     }
@@ -197,6 +231,11 @@ export default function MyPageUI() {
                         </div>
                         <LogoutIcon/>
                     </div>
+                    <div className='flex flex-row justify-between text-[#666666] cursor-pointer mt-2' onClick={handleDeleteAccount}>
+                        <div className='text-sm'>
+                            회원 탈퇴
+                        </div>
+                    </div>
                         
                 </div>
             </CustomTabPanel>
@@ -248,6 +287,11 @@ export default function MyPageUI() {
                             </div>
                             <LogoutIcon/>
                         </div>
+                        <div className='flex flex-row justify-between text-[#666666] cursor-pointer mt-2' onClick={handleDeleteAccount}>
+                            <div className='text-sm'>
+                                회원 탈퇴
+                            </div>
+                        </div>
                         
                     </div>
                 </div>
@@ -282,6 +326,18 @@ export default function MyPageUI() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="010-1234-5678"
                                 />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <label className="block text-sm font-medium">프로필 사진 표시</label>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={profilePictureEnabled}
+                                        onChange={(e) => setProfilePictureEnabled(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
                             </div>
                             <div className="flex flex-row gap-2 justify-end mt-4">
                                 <button

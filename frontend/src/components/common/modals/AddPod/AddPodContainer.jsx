@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AddPodPresenter from "./AddPodPresenter";
 import { useMe } from "../../../../queries/useMe"; // 로그인 사용자 정보 (쿠키 기반)
 import dayjs from "dayjs";
 
-export default function AddPodContainer({ isOpen, onClose, onSave }) {
+export default function AddPodContainer({ isOpen, onClose, onSave, initialData = null, isEditMode = false }) {
     const { data: me, isLoading: meLoading, isError: meError } = useMe();
     const [form, setForm] = useState({
         category: null,
@@ -21,6 +21,37 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
     const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
     const [errors, setErrors] = useState({});
     const [hasErrors, setHasErrors] = useState(false);
+
+    // 수정 모드일 때 초기 데이터 설정
+    useEffect(() => {
+        if (isEditMode && initialData && isOpen) {
+            const eventDateTime = dayjs(initialData.event_time);
+            setForm({
+                category: initialData.category_ids?.[0] || null,
+                podTitle: initialData.title || "",
+                podDescription: initialData.content || "",
+                minPeople: initialData.min_peoples || 0,
+                maxPeople: initialData.max_peoples || 100,
+                openDate: eventDateTime,
+                openTime: eventDateTime,
+                selectedPlace: initialData.place ? { address: initialData.place } : null,
+                placeDetail: initialData.place_detail || "",
+            });
+        } else if (!isEditMode && !isOpen) {
+            // 생성 모드에서 모달이 닫힐 때 폼 초기화
+            setForm({
+                category: null,
+                podTitle: "",
+                podDescription: "",
+                minPeople: 0,
+                maxPeople: 100,
+                openDate: null,
+                openTime: null,
+                selectedPlace: null,
+                placeDetail: "",
+            });
+        }
+    }, [isEditMode, initialData, isOpen]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -89,7 +120,18 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
     const handleSubmit = () => {
         if (!validateForm()) return;
         const timeStr = form.openTime.format('HH:mm');
-        const temp = {
+        const temp = isEditMode ? {
+            // 수정 모드: host_user_id 제외
+            event_time:form.openDate.toISOString().split("T")[0]+"T"+timeStr,
+            place: form.selectedPlace?.address || null,
+            place_detail: form.placeDetail,
+            title: form.podTitle,
+            content: form.podDescription,
+            min_peoples: form.minPeople,
+            max_peoples: form.maxPeople,
+            category_ids: [form.category]
+        } : {
+            // 생성 모드
             host_user_id:me.user_id,
             event_time:form.openDate.toISOString().split("T")[0]+"T"+timeStr,
             place: form.selectedPlace?.address || null,

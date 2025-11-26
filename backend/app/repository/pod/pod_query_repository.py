@@ -10,9 +10,9 @@ class PodQueryRepository:
     def find_pod_by_id(self, pod_id: int) -> Optional[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             sql = """
-                SELECT p.*, u.username AS host_username
+                SELECT p.*, COALESCE(u.username, '탈퇴한 회원') AS host_username
                 FROM pod p
-                JOIN user u ON p.host_user_id = u.user_id
+                LEFT JOIN user u ON p.host_user_id = u.user_id
                 WHERE p.pod_id = %s
             """
             cursor.execute(sql, (pod_id,))
@@ -23,13 +23,13 @@ class PodQueryRepository:
             sql = """
             SELECT
                 p.*,
-                u.username AS host_username,
+                COALESCE(u.username, '탈퇴한 회원') AS host_username,
                 comAgg.comments,
                 catAgg.categories,
                 pmAgg.members,
                 COUNT(pm.user_id) AS current_member
             FROM pod p
-            JOIN user u ON p.host_user_id = u.user_id
+            LEFT JOIN user u ON p.host_user_id = u.user_id
             LEFT JOIN pod_member pm ON p.pod_id = pm.pod_id
 
             LEFT JOIN (
@@ -40,14 +40,14 @@ class PodQueryRepository:
                             'comment_id',         c.comment_id,
                             'parent_comment_id',  c.parent_comment_id,
                             'user_id',            c.user_id,
-                            'username',           cu.username,
-                            'profile_picture',    ka.profile_picture,
+                            'username',           COALESCE(cu.username, '탈퇴한 회원'),
+                            'profile_picture',    COALESCE(ka.profile_picture, 'https://via.placeholder.com/32'),
                             'content',            c.content,
                             'created_at',         c.created_at
                         )
                     ) AS comments
                 FROM comment c
-                JOIN user cu
+                LEFT JOIN user cu
                     ON cu.user_id = c.user_id
                 LEFT JOIN kakaoapi ka
                     ON ka.user_id = c.user_id
@@ -76,14 +76,14 @@ class PodQueryRepository:
                         JSON_OBJECT(
                             'pod_member_id',   pm2.pod_member_id,
                             'user_id',         pm2.user_id,
-                            'username',        u2.username,
-                            'profile_picture', ka2.profile_picture,
+                            'username',        COALESCE(u2.username, '탈퇴한 회원'),
+                            'profile_picture', COALESCE(ka2.profile_picture, 'https://via.placeholder.com/32'),
                             'amount',          pm2.amount,
                             'joined_at',       pm2.joined_at
                         )
                     ) AS members
                 FROM pod_member pm2
-                JOIN user u2
+                LEFT JOIN user u2
                     ON u2.user_id = pm2.user_id
                 LEFT JOIN kakaoapi ka2
                     ON ka2.user_id = pm2.user_id
@@ -112,11 +112,11 @@ class PodQueryRepository:
             sql = """
             SELECT
                 p.*,
-                u.username AS host_username,
+                COALESCE(u.username, '탈퇴한 회원') AS host_username,
                 COALESCE(pmAgg.current_member, 0) AS current_member,
                 clAgg.category_ids
             FROM pod p
-            JOIN user u ON p.host_user_id = u.user_id
+            LEFT JOIN user u ON p.host_user_id = u.user_id
             LEFT JOIN (
                 SELECT pod_id, COUNT(*) AS current_member
                 FROM pod_member
@@ -140,7 +140,7 @@ class PodQueryRepository:
             sql = """
             SELECT 
                 p.*,
-                u.username AS host_username,
+                COALESCE(u.username, '탈퇴한 회원') AS host_username,
                 (
                     SELECT COUNT(DISTINCT pm.user_id)
                     FROM pod_member pm
@@ -161,7 +161,7 @@ class PodQueryRepository:
                 ) AS category_ids
 
             FROM pod p
-            JOIN user u 
+            LEFT JOIN user u 
                 ON p.host_user_id = u.user_id
 
             WHERE
