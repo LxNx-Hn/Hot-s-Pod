@@ -10,10 +10,15 @@ class PodQueryRepository:
     def find_pod_by_id(self, pod_id: int) -> Optional[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             sql = """
-                SELECT p.*, COALESCE(u.username, '탈퇴한 회원') AS host_username
+                SELECT 
+                    p.*, 
+                    COALESCE(u.username, '탈퇴한 회원') AS host_username,
+                    COUNT(pm.user_id) AS current_member
                 FROM pod p
                 LEFT JOIN user u ON p.host_user_id = u.user_id
+                LEFT JOIN pod_member pm ON p.pod_id = pm.pod_id
                 WHERE p.pod_id = %s
+                GROUP BY p.pod_id
             """
             cursor.execute(sql, (pod_id,))
             return cursor.fetchone()

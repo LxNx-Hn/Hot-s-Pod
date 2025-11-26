@@ -15,6 +15,7 @@ import { usePodMe, useUsersPod } from '../../../queries/usePodMembers.js';
 import { LogOut } from '../../../api/logout.js';
 import { createPod, fetchPods } from "@redux/slices/podSlice.js";
 import { imageData } from "../../../data/categories.js";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 function CustomTabPanel(props) {
@@ -59,6 +60,7 @@ export default function MyPageUI() {
     const [profilePictureEnabled, setProfilePictureEnabled] = useState(true);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const queryClient = useQueryClient();
     const { data: podsData, isLoading: podLoading, isError: isPodError } = usePodMe(data?.user_id);
     const { data: myPodsData, isLoading: myPodsLoading, isError: isMyPodsError } = useUsersPod(data?.user_id);
 
@@ -112,7 +114,10 @@ export default function MyPageUI() {
             try {
                 await dispatch(createPod(podData)).unwrap();
                 alert('POD이 생성되었습니다!');
-                dispatch(fetchPods());
+                // React Query 캐시 무효화
+                queryClient.invalidateQueries({ queryKey: ["pods"] });
+                queryClient.invalidateQueries({ queryKey: ["podMember"] });
+                setIsPodModalOpen(false);
             } catch (error) {
                 alert('POD 생성에 실패했습니다: ' + error.message);
             }
