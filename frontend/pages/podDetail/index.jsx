@@ -339,7 +339,7 @@ export default function ChatPage() {
     const newDate = toSeoulDate(date);
     const weekDays = ["일","월","화","수","목","금","토"];
     //요일 .getDay -> 0~6 > 일 ~ 토
-    var result = formatSeoul(newDate, { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    var result = formatSeoul(newDate, { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     return result;
   }
   const joinPodFunc = async() => {

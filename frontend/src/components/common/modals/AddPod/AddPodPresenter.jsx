@@ -166,6 +166,8 @@ export default function AddPodPresenter({
                                     <TimePicker
                                         value={form.openTime}
                                         onChange={handleTimeChange}
+                                        format="HH:mm"
+                                        minuteStep={10}
                                         placeholder="시간 선택"
                                         status={errors.openTime||errors.openDateTime ? "error" : ""}
                                         className="h-[45px] w-full"

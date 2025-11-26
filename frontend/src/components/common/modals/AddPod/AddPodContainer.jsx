@@ -76,9 +76,10 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
 
     const handleSubmit = () => {
         if (!validateForm()) return;
+        const timeStr = form.openTime.format('HH:mm');
         const temp = {
             host_user_id:me.user_id,
-            event_time:form.openDate.toISOString().split("T")[0]+"T"+form.openTime.toDate().toString().split(' ')[4],
+            event_time:form.openDate.toISOString().split("T")[0]+"T"+timeStr,
             place: form.selectedPlace?.address || null,
             place_detail: form.placeDetail,
             title: form.podTitle,
