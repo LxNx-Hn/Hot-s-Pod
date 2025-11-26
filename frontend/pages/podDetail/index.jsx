@@ -62,7 +62,7 @@ const CommentItem = ({
 }) => {
   const indentClass = getIndentClass(level);
   const isMyComment = comment.user_id === currentUserId;
-  const isDeleted = comment.user_id === null || comment.content === "[삭제된 댓글입니다]";
+  const isDeleted = comment.user_id === null || comment.content === "[사용자가 댓글을 삭제했습니다]" || comment.content === "[삭제된 댓글입니다]";
   const isWithdrawnUser = comment.username === "탈퇴한 회원";
   const canDelete = (isMyComment || isAdmin) && !isDeleted; // 본인 또는 관리자
   const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 본인만
