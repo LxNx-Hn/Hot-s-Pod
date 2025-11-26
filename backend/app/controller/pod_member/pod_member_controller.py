@@ -26,8 +26,8 @@ async def join_pod(
         return {"pod_member_id": member_id, "message": "Successfully joined the pod"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Pod 참가 중 오류가 발생했습니다.")
 
 @router.delete("/{pod_id}/{user_id}", response_model=dict)
 async def leave_pod(
@@ -56,6 +56,14 @@ async def get_user_pods(
 ):
     """사용자가 참가한 Pod 목록"""
     return service.get_user_pods(user_id)
+
+@router.get("/host/{host_id}", response_model=List[dict])
+async def get_host_user_pods(
+    host_id: int,
+    service: PodMemberService = Depends(get_pod_member_service)
+):
+    """사용자가 생성한 Pod 목록"""
+    return service.get_user_hosted_pods(host_id)
 
 @router.get("/pod/{pod_id}/count", response_model=dict)
 async def get_member_count(

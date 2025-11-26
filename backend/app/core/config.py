@@ -1,10 +1,10 @@
-# app/core/config.py
 import os
 from typing import Optional, List
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 load_dotenv()
+
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "Hot's POD"
@@ -12,11 +12,11 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DATABASE_HOST: str = "127.0.0.1"
+    DATABASE_HOST: str
     DATABASE_PORT: int = 3306
-    DATABASE_USER: str = "hots_pod_user"
-    DATABASE_PASSWORD: str = "change-me"
-    DATABASE_NAME: str = "hots_pod_db"
+    DATABASE_USER: str
+    DATABASE_PASSWORD: str
+    DATABASE_NAME: str
 
     # Kakao OAuth
     KAKAO_REST_API_KEY: Optional[str] = None
@@ -24,30 +24,21 @@ class Settings(BaseSettings):
     KAKAO_CLIENT_SECRET: Optional[str] = None
     VITE_API_BASE_URL: Optional[str] = None
 
-    # JWT
-    JWT_SECRET_KEY: str = "change-this-in-production"
+    # Frontend URL
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # LLM / RAG
-    LLM_PROVIDER: str = "DISABLED"
-    #API / LOCAL /DISABLED
+    # LLM & Embedding Models
+    LOCAL_LLM_MODEL_NAME: str = "K-intelligence/Midm-2.0-Mini-Instruct"
+    EMBEDDING_MODEL_NAME: str = "jhgan/ko-sroberta-multitask"
 
-    # API 모드 설정
-    LLM_API_KEY: Optional[str] = None
-    LLM_API_URL: Optional[str] = None
-    LLM_MODEL_NAME: Optional[str] = None
-    
-    # LOCAL 모드 설정
-    LOCAL_LLM_MODEL_NAME: Optional[str] = None
-    LOCAL_LLM_DEVICE: str = "auto"
-    LOCAL_LLM_LOAD_IN_8BIT: bool = True
-
-    # Vector DB & Embedding
+    # Vector DB
     CHROMA_DB_PATH: str = "./chroma_db_data"
-    EMBEDDING_MODEL_NAME: Optional[str] = None
 
-    # 경주시 주요 지역 키워드
+    # 경주시 주요 지역 키워드 - 코드에서만 관리 (설정 아님)
     PLACE_KEYWORDS: List[str] = [
         '황성동', '석장동', '성건동', '용강동', '월성동',
         '교동', '구황동', '남산동', '도지동', '동방동',
@@ -73,8 +64,10 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: Optional[str] = None
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 settings = Settings()

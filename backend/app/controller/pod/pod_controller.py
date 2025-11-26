@@ -5,7 +5,7 @@ from app.database import get_db_connection
 from app.repository.pod.pod_command_repository import PodCommandRepository
 from app.repository.pod.pod_query_repository import PodQueryRepository
 from app.service.pod.pod_service import PodService
-from app.schemas.pod import PodCreateRequest, PodResponse
+from app.schemas.pod import PodCreateRequest, PodResponse, PodDetailResponse, PodListResponse
 from typing import List
 
 router = APIRouter(prefix="/pods", tags=["Pods"])
@@ -24,27 +24,52 @@ async def create_pod(
     try:
         pod_id = pod_service.create_pod(pod_data)
         return {"pod_id": pod_id, "message": "Pod created successfully"}
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Pod 생성 중 오류가 발생했습니다.")
 
-@router.get("/{pod_id}", response_model=PodResponse)
+
+
+@router.get("/search", response_model=List[PodListResponse])
+async def get_pod(
+    query: str,
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    pod_service: PodService = Depends(get_pod_service)
+):
+    """Pod 검색 조회"""
+    pod = pod_service.search_pod(query,limit,offset)
+    if not pod:
+        raise HTTPException(status_code=404, detail="Pod not found")
+    return pod
+@router.get("/detail/{pod_id}", response_model=PodDetailResponse)
 async def get_pod(
     pod_id: int,
     pod_service: PodService = Depends(get_pod_service)
 ):
     """Pod 상세 조회"""
-    pod = pod_service.get_pod(pod_id)
+    pod = pod_service.get_podDetail(pod_id)
     if not pod:
         raise HTTPException(status_code=404, detail="Pod not found")
     return pod
-
-@router.get("/", response_model=List[PodResponse])
+@router.get("/", response_model=List[PodListResponse])
 async def list_pods(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     pod_service: PodService = Depends(get_pod_service)
 ):
     """Pod 목록 조회"""
+    return pod_service.list_all_pods(limit, offset)
+
+
+@router.get("", response_model=List[PodListResponse])
+async def list_pods_no_slash(
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    pod_service: PodService = Depends(get_pod_service)
+):
+    """Pod 목록 조회 (no trailing slash) - `/pods` 요청 대응"""
     return pod_service.list_all_pods(limit, offset)
 
 @router.post("/{pod_id}/join", response_model=dict)

@@ -10,7 +10,7 @@ class CommentCommandRepository:
         #댓글
         with self.db.cursor() as cursor:
             sql = """
-                INSERT INTO Comment (pod_id, user_id, content, parent_comment_id)
+                INSERT INTO comment (pod_id, user_id, content, parent_comment_id)
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, (
@@ -25,7 +25,7 @@ class CommentCommandRepository:
     def delete_comment(self, comment_id: int) -> bool:
         """댓글 삭제"""
         with self.db.cursor() as cursor:
-            sql = "DELETE FROM Comment WHERE comment_id = %s"
+            sql = "DELETE FROM comment WHERE comment_id = %s"
             cursor.execute(sql, (comment_id,))
             self.db.commit()
             return cursor.rowcount > 0

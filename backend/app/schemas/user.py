@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     user_id: int
     username: str
     phonenumber: Optional[str]
+    profile_picture: str
     created_at: datetime
 
     class Config:

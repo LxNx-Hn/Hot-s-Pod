@@ -8,6 +8,13 @@ class UserQueryRepository:
     
     def find_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
         with self.db.cursor() as cursor:
-            sql = "SELECT * FROM User WHERE user_id = %s"
+            sql = "SELECT * FROM user WHERE user_id = %s"
             cursor.execute(sql, (user_id,))
-            return cursor.fetchone()
+            res = cursor.fetchone()
+            if not res:
+                return None
+            sql = "SELECT profile_picture FROM kakaoapi WHERE user_id = %s"
+            cursor.execute(sql, (user_id,))
+            kakao_data = cursor.fetchone()
+            res["profile_picture"] = kakao_data["profile_picture"] if kakao_data else ""
+            return res

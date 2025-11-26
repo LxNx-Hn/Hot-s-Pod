@@ -8,7 +8,7 @@ class UserCommandRepository:
     
     def create_user(self, username: str, phonenumber: Optional[str] = None) -> int:
         with self.db.cursor() as cursor:
-            sql = "INSERT INTO User (username, phonenumber) VALUES (%s, %s)"
+            sql = "INSERT INTO user (username, phonenumber) VALUES (%s, %s)"
             cursor.execute(sql, (username, phonenumber))
             self.db.commit()
             return cursor.lastrowid

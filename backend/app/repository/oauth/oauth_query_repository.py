@@ -18,8 +18,8 @@ class OAuthQueryRepository:
                     k.k_id,
                     k.user_name,
                     k.profile_picture
-                FROM User u
-                JOIN KakaoAPI k ON u.user_id = k.user_id
+                FROM user u
+                JOIN kakaoapi k ON u.user_id = k.user_id
                 WHERE k.k_id = %s
             """
             cursor.execute(sql, (k_id,))

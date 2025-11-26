@@ -24,8 +24,10 @@ async def save_chat_message(
     try:
         chat_id = chat_service.save_message(message_data)
         return {"chat_id": chat_id, "message": "Message saved successfully"}
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="메시지 저장 중 오류가 발생했습니다.")
 
 @router.get("/pod/{pod_id}", response_model=List[ChatMessageResponse])
 async def get_pod_messages(

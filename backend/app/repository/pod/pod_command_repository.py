@@ -8,7 +8,7 @@ class PodCommandRepository:
         self.db = db
 
     def create_pod(self, pod_data: PodCreateRequest) -> int:
-        category_ids_json = json.dumps(pod_data.category_ids)
+        category_ids_json = json.dumps([0] + pod_data.category_ids)
         
         with self.db.cursor() as cursor:
             cursor.callproc('sp_CreatePod', (
@@ -17,6 +17,8 @@ class PodCommandRepository:
                 pod_data.place,
                 pod_data.title,
                 pod_data.content,
+                pod_data.min_peoples,
+                pod_data.max_peoples,
                 category_ids_json
             ))
             result = cursor.fetchone()
@@ -29,7 +31,7 @@ class PodCommandRepository:
     def join_pod(self, pod_id: int, user_id: int) -> bool:
         with self.db.cursor() as cursor:
             try:
-                sql = "INSERT INTO Pod_Member (user_id, pod_id) VALUES (%s, %s)"
+                sql = "INSERT INTO pod_member (user_id, pod_id) VALUES (%s, %s)"
                 cursor.execute(sql, (user_id, pod_id))
                 self.db.commit()
                 return True

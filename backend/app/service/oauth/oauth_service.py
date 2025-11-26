@@ -20,8 +20,17 @@ class OAuthService:
         tokens: Dict[str, str]
     ) -> Dict[str, Any]:
         k_id = kakao_profile['id']
-        user_name = kakao_profile['properties']['nickname']
-        profile_picture = kakao_profile['properties'].get('profile_image_url', '')
+        
+        # properties 또는 kakao_account에서 닉네임 가져오기
+        if 'properties' in kakao_profile:
+            user_name = kakao_profile['properties'].get('nickname', '사용자')
+            profile_picture = kakao_profile['properties'].get('profile_image', '')
+        elif 'kakao_account' in kakao_profile and 'profile' in kakao_profile['kakao_account']:
+            user_name = kakao_profile['kakao_account']['profile'].get('nickname', '사용자')
+            profile_picture = kakao_profile['kakao_account']['profile'].get('profile_image_url', '')
+        else:
+            user_name = f"사용자{k_id}"
+            profile_picture = ""
         
         existing_user = self.oauth_query.find_user_by_kakao_id(k_id)
         

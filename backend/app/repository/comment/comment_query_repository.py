@@ -11,8 +11,8 @@ class CommentQueryRepository:
         with self.db.cursor() as cursor:
             sql = """
                 SELECT c.*, u.username
-                FROM Comment c
-                JOIN User u ON c.user_id = u.user_id
+                FROM comment c
+                JOIN user u ON c.user_id = u.user_id
                 WHERE c.comment_id = %s
             """
             cursor.execute(sql, (comment_id,))
@@ -23,8 +23,8 @@ class CommentQueryRepository:
         with self.db.cursor() as cursor:
             sql = """
                 SELECT c.*, u.username
-                FROM Comment c
-                JOIN User u ON c.user_id = u.user_id
+                FROM comment c
+                JOIN user u ON c.user_id = u.user_id
                 WHERE c.pod_id = %s
                 ORDER BY c.created_at ASC
             """

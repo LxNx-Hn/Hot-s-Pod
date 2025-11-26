@@ -1,30 +1,18 @@
-# FastAPI web framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-
-# Database driver and connection pooling
-pymysql==1.1.0
-DBUtils==3.0.3
-
-# Configuration management
-pydantic-settings==2.1.0
-
-# OAuth & JWT
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-requests==2.31.0
-
-# AI - Embedding Model
-sentence-transformers==2.2.2
-
-# AI - Vector Database
-chromadb==0.4.18
-
-# AI - LLM (for local inference)
-torch==2.6.00
+fastapi
+uvicorn
+pandas
+numpy==1.26.4
+requests
+python-dotenv
+pymysql
+DBUtils
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+chromadb
+torch==2.6.0
+torchvision==0.21.0
+torchaudio==2.6.0
 transformers==4.45.0
-accelerate==0.25.0
-bitsandbytes==0.41.3
-
-# Utilities
-python-dotenv==1.0.0
+sentence-transformers==3.0.1
+accelerate

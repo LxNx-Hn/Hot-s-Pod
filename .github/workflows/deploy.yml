@@ -1,0 +1,177 @@
+name: Build & Deploy Backend Container
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check directory structure
+        run: |
+          pwd
+          ls -la
+          if [ -d "backend" ]; then
+            echo "backend directory found"
+            ls -la backend/
+          else
+            echo "backend directory not found"
+            exit 1
+          fi
+       
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+       
+      - name: Build backend Docker image
+        run: |
+          IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest" | tr '[:upper:]' '[:lower:]')
+          docker build -t "$IMAGE_NAME_LOWER" -f backend/Dockerfile backend/
+          docker push "$IMAGE_NAME_LOWER"
+          echo "✅ Backend image pushed: $IMAGE_NAME_LOWER"
+
+  deploy-backend-runpod:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Update backend container on RunPod
+        run: |
+          set -e
+          
+          IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest" | tr '[:upper:]' '[:lower:]')
+          echo "Using image: $IMAGE_NAME_LOWER"
+          
+          RUNPOD_API_BASE="https://rest.runpod.io/v1/pods"
+          POD_ID="${{ secrets.RUNPOD_BACKEND_POD_ID }}"
+          
+          # 1. 현재 팟 상태 확인
+          echo "Checking current pod status..."
+          CURRENT_STATUS=$(curl -s \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            "$RUNPOD_API_BASE/$POD_ID")
+          echo "Current status: $CURRENT_STATUS"
+          
+          # 2. 팟 중지
+          echo "Stopping pod..."
+          STOP_RESPONSE=$(curl -s --request POST \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            "$RUNPOD_API_BASE/$POD_ID/stop")
+          echo "Stop response: $STOP_RESPONSE"
+          
+          # 3. 중지 상태 확인 (최대 60초 대기)
+          echo "Waiting for pod to stop..."
+          for i in {1..12}; do
+            sleep 5
+            STATUS_JSON=$(curl -s \
+              --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+              "$RUNPOD_API_BASE/$POD_ID")
+            
+            DESIRED_STATUS=$(echo "$STATUS_JSON" | jq -r '.desiredStatus // "unknown"')
+            echo "Attempt $i: desiredStatus=$DESIRED_STATUS"
+            
+            if [ "$DESIRED_STATUS" = "EXITED" ] || [ "$DESIRED_STATUS" = "STOPPED" ]; then
+              echo "Pod stopped successfully"
+              break
+            fi
+            
+            if [ $i -eq 12 ]; then
+              echo "Warning: Pod may not have stopped completely, continuing anyway..."
+            fi
+          done
+          
+          # 4. 팟 업데이트
+          echo "Updating pod configuration..."
+          UPDATE_RESPONSE=$(curl -s --request PATCH \
+            --url "$RUNPOD_API_BASE/$POD_ID" \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            --header "Content-Type: application/json" \
+            --data "{
+              \"imageName\": \"$IMAGE_NAME_LOWER\",
+              \"containerDiskInGb\": 20,
+              \"ports\": \"8000/http\",
+              \"env\": {
+                \"DATABASE_HOST\": \"127.0.0.1\",
+                \"DATABASE_PORT\": \"3306\",
+                \"DATABASE_USER\": \"${{ secrets.DATABASE_USER }}\",
+                \"DATABASE_PASSWORD\": \"${{ secrets.DATABASE_PASSWORD }}\",
+                \"DATABASE_NAME\": \"hots_pod_db\",
+                \"JWT_SECRET_KEY\": \"${{ secrets.JWT_SECRET_KEY }}\",
+                \"JWT_ALGORITHM\": \"HS256\",
+                \"KAKAO_REST_API_KEY\": \"${{ secrets.KAKAO_REST_API_KEY }}\",
+                \"KAKAO_REDIRECT_URI\": \"${{ secrets.KAKAO_REDIRECT_URI }}\",
+                \"KAKAO_CLIENT_SECRET\": \"${{ secrets.KAKAO_CLIENT_SECRET }}\",
+                \"FRONTEND_URL\": \"${{ secrets.FRONTEND_URL }}\",
+                \"LOCAL_LLM_MODEL_NAME\": \"K-intelligence/Midm-2.0-Mini-Instruct\",
+                \"EMBEDDING_MODEL_NAME\": \"jhgan/ko-sroberta-multitask\",
+                \"INIT_DB\": \"true\"
+              },
+              \"volumeInGb\": 50,
+              \"volumeMountPath\": \"/workspace\"
+            }")
+          echo "Update response: $UPDATE_RESPONSE"
+          
+          # 5. 업데이트 성공 여부 확인
+          if echo "$UPDATE_RESPONSE" | jq -e '.id // .podId' > /dev/null; then
+            echo "Pod updated successfully"
+          else
+            echo "Error: Pod update may have failed"
+            echo "Response: $UPDATE_RESPONSE"
+          fi
+          
+          # 6. 팟 재시작
+          echo "Starting pod..."
+          START_RESPONSE=$(curl -s --request POST \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            "$RUNPOD_API_BASE/$POD_ID/start")
+          echo "Start response: $START_RESPONSE"
+          
+          # 7. 시작 상태 확인
+          echo "Waiting for pod to start..."
+          for i in {1..24}; do
+            sleep 5
+            STATUS_JSON=$(curl -s \
+              --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+              "$RUNPOD_API_BASE/$POD_ID")
+            
+            DESIRED_STATUS=$(echo "$STATUS_JSON" | jq -r '.desiredStatus // "unknown"')
+            echo "Attempt $i: desiredStatus=$DESIRED_STATUS"
+            
+            if [ "$DESIRED_STATUS" = "RUNNING" ]; then
+              echo "Pod started successfully"
+              
+              POD_URL=$(echo "$STATUS_JSON" | jq -r '.runtime.ports[0].publicUrl // "N/A"')
+              echo "Pod URL: $POD_URL"
+              break
+            fi
+            
+            if [ $i -eq 24 ]; then
+              echo "Warning: Pod may not have started properly"
+              echo "Final status: $STATUS_JSON"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Deployment completed successfully!"
+          
+          # 8. 최종 상태 출력
+          echo "Final pod information:"
+          curl -s \
+            --header "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            "$RUNPOD_API_BASE/$POD_ID" | jq '.'

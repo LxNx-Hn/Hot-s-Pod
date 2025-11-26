@@ -24,8 +24,10 @@ async def create_comment(
     try:
         comment_id = comment_service.create_comment(comment_data)
         return {"comment_id": comment_id, "message": "Comment created successfully"}
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="댓글 생성 중 오류가 발생했습니다.")
 
 @router.get("/{comment_id}", response_model=CommentResponse)
 async def get_comment(

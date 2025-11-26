@@ -51,8 +51,13 @@ async def search_pods_with_rag(
             retrieved_pods=retrieved_pods,
             total_found=len(retrieved_pods) # 주석쓰기 귀찮네요..
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG search failed: {str(e)}")
+        import traceback
+        print(f"RAG 에러 상세: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"RAG 검색 중 오류가 발생했습니다: {str(e)}")
 
 @router.get("/health", response_model=dict)
 async def rag_health_check():
@@ -64,9 +69,8 @@ async def rag_health_check():
         return {
             "status": "healthy",
             "embedding_model": settings.EMBEDDING_MODEL_NAME,
-            "llm_provider": settings.LLM_PROVIDER,
             "vector_db_count": collection_count,
             "vector_db_path": settings.CHROMA_DB_PATH
         }
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"RAG system unhealthy: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=503, detail="RAG 시스템이 응답하지 않습니다.")

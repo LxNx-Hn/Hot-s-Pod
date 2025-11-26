@@ -1,4 +1,5 @@
 # backend/main.py
+# uvicorn main:app --reload --host 127.0.0.1 --port 8000
 import threading
 import asyncio
 from contextlib import asynccontextmanager
@@ -7,16 +8,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
-# 모든 컨트롤러 import
 from app.controller.user import user_controller
 from app.controller.pod import pod_controller
 from app.controller.oauth import oauth_controller
 from app.controller.rag import rag_controller
+from app.service.rag.rag_worker_service import RagWorkerService
 from app.controller.comment import comment_controller
 from app.controller.chat import chat_controller  
 from app.controller.pod_member import pod_member_controller
 from app.socket import websocket
-from app.service.rag.rag_worker_service import RagWorkerService
+from app.core.config import settings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,11 +27,10 @@ logger = logging.getLogger(__name__)
 
 rag_worker = None
 worker_thread = None
-shutdown_flag = False  # 추가
 
 def run_rag_worker_in_thread():
     """RAG Worker를 별도 스레드에서 실행"""
-    global rag_worker, shutdown_flag
+    global rag_worker
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
@@ -52,22 +52,20 @@ def run_rag_worker_in_thread():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """애플리케이션 생명주기 관리"""
-    global worker_thread, shutdown_flag
+    global worker_thread
     logger.info("Application starting up...")
     
-    # RAG Worker 시작
-    shutdown_flag = False
-    worker_thread = threading.Thread(target=run_rag_worker_in_thread, daemon=True)
-    worker_thread.start()
-    logger.info("RAG worker thread started")
+    if settings.FEATURE_RAG_ENABLED:
+        worker_thread = threading.Thread(target=run_rag_worker_in_thread, daemon=True)
+        worker_thread.start()
+        logger.info("RAG worker thread started")
+    else:
+        logger.info("RAG feature is disabled")
     
     yield
     
-    # Graceful Shutdown
     logger.info("Application shutting down...")
-    shutdown_flag = True
     
-    # Worker 종료 대기 (최대 5초)
     if worker_thread and worker_thread.is_alive():
         worker_thread.join(timeout=5)
         if worker_thread.is_alive():
@@ -94,7 +92,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 모든 라우터 등록
 app.include_router(user_controller.router)
 app.include_router(pod_controller.router)
 app.include_router(oauth_controller.router)
@@ -120,3 +117,8 @@ async def health_check():
         "status": "healthy",
         "rag_worker": "running" if worker_thread and worker_thread.is_alive() else "stopped"
     }
+
+# 서버 실행 방법:
+# 1. Backend 폴더로 이동: cd C:\Users\KiKi\Desktop\DataBaseProject\Hot-s-Pod\Backend
+# 2. 콘다 환경 활성화: conda activate hots_pod
+# 3. 서버 실행: python -m uvicorn main:app --host 0.0.0.0 --port 8000

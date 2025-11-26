@@ -10,7 +10,7 @@ class ChatCommandRepository:
         """채팅 저장"""
         with self.db.cursor() as cursor:
             sql = """
-                INSERT INTO Chat (pod_id, user_id, content)
+                INSERT INTO chat (pod_id, user_id, content)
                 VALUES (%s, %s, %s)
             """
             cursor.execute(sql, (

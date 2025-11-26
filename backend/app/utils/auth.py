@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 
@@ -45,4 +45,15 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             detail="Invalid token payload"
         )
     
+    return user_id
+
+def get_current_user_id_from_cookie(request: Request) -> int:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    payload = decode_access_token(token)
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
     return user_id
