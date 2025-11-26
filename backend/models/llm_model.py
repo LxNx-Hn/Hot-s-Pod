@@ -30,7 +30,7 @@ class LLMModel:
         if self.gen_config.pad_token_id is None:
             self.gen_config.pad_token_id = self.tokenizer.pad_token_id
     
-    def generate_response(self, messages, max_new_tokens=128, do_sample=True):
+    def generate_response(self, messages, max_new_tokens=256, do_sample=True):
         input_ids = self.tokenizer.apply_chat_template(
             messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
         ).to(self.llm.device)

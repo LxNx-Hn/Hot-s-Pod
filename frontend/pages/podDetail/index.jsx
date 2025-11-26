@@ -357,9 +357,10 @@ export default function ChatPage() {
   }
   const leavePodFunc = async() => {
     try{
-      if(me)
+      if(me) {
         await leavePod(me.user_id,podId);
         refetchPodDetail();
+      }
     }
     catch(e)
     {
@@ -375,9 +376,6 @@ export default function ChatPage() {
         <div className="text-xl">Loading...</div>
       </div>
     );
-  }
-  else{
-    console.log(messages);
   }
   if (meError) {
     // 인증 실패 시 로그인 페이지로
@@ -423,7 +421,7 @@ export default function ChatPage() {
             <div className="font-bold text-xl">참여자({podDetail.current_member})</div>
             <div className="flex flex-row ml-3">
               {podDetail.members.length==0?<></>:podDetail.members.map((value,index)=>{
-                return (<img className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value.profile_picture} />)
+                return (<img key={value.user_id} className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value.profile_picture} />)
               })}
             </div>
           </div>

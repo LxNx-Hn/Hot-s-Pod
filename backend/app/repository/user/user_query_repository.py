@@ -16,5 +16,5 @@ class UserQueryRepository:
             sql = "SELECT profile_picture FROM kakaoapi WHERE user_id = %s"
             cursor.execute(sql, (user_id,))
             kakao_data = cursor.fetchone()
-            res["profile_picture"] = kakao_data["profile_picture"] if kakao_data else ""
+            res["profile_picture"] = kakao_data.get("profile_picture", "") if kakao_data else ""
             return res

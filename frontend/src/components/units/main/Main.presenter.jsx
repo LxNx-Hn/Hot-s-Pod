@@ -87,22 +87,27 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                 {/* POD 목록 */}
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-wrap gap-4">
-                        {pods&&pods.map((pod, idx) => (
+                        {pods&&pods.map((pod) => {
+                            const daysLeft = Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24));
+                            return (
                             <div 
-                                key={idx} 
+                                key={pod.pod_id} 
                                 onClick={() => onPodClick && onPodClick(pod.pod_id)}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
-                                <img className='h-24 rounded-t-lg w-full' src={imageData[pod&&pod.category_ids?pod.category_ids[0]:0]}/>
+                                <img className='h-24 rounded-t-lg w-full' src={imageData[pod?.category_ids?.[0] ?? 0]}/>
                                 <div className='flex flex-col gap-1 p-3'>
                                     <div className="font-bold text-lg truncate">{pod.title}</div>
                                     <div className="text-[#888888] text-xs">{pod.content}</div>
                                     <div className='flex flex-row justify-between'>
                                         <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
-                                        {Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
-                                        <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>:
-                                        <div className='text-[#FDC862] text-xs font-semibold'>D{Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)) < 0 ? `+${Math.abs(Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)))}` : `-${Math.abs(Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24)))}`}</div>
-                                        }
+                                        {daysLeft === 0 ? (
+                                            <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>
+                                        ) : daysLeft < 0 ? (
+                                            <div className='text-gray-500 text-xs font-semibold'>마감됨</div>
+                                        ) : (
+                                            <div className='text-[#FDC862] text-xs font-semibold'>D-{daysLeft}</div>
+                                        )}
                                     </div>
                                     <div className='flex flex-row gap-1'>
                                         <SizeComponent Component={PlaceOutlinedIcon} fontSize={16}/>
@@ -110,7 +115,7 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </div>
             </div>

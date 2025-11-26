@@ -55,9 +55,11 @@ async def search_pods_with_rag(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         import traceback
-        print(f"RAG 에러 상세: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"RAG 검색 중 오류가 발생했습니다: {str(e)}")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"RAG 에러 상세: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="RAG 검색 중 오류가 발생했습니다.")
 
 @router.get("/health", response_model=dict)
 async def rag_health_check():

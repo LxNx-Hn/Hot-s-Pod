@@ -50,9 +50,9 @@ class RagService: #친절한 주석 < -RAG서비스
             raise ValueError("임베딩 생성에 실패했습니다. 입력을 확인하세요.")
 
         try:
-            results = self.collection.query( #이때 이미 질문기준으로 뒤에 워커파일이 유사도높은걸 가져와서 이거만 하면됩니당
+            results = self.collection.query(
                 query_embeddings=[query_vector],
-                n_results=20 #이게 출력되는 개순데, 이전에는 3개했었는데. 프렌들리 AI쓰면되니까 일단 늘려둠
+                n_results=5
             )
         except Exception as e:
             logger.exception(f"Vector DB query failed for query='{query}': {e}")
@@ -61,8 +61,8 @@ class RagService: #친절한 주석 < -RAG서비스
             logger.warning("No vector search results") # 진짜 예외처리 안하는데 코파일럿이 이거보고 죽일라해서 넣음
             return []
         
-        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.85 이상이면 관련없다고 판단)
-        SIMILARITY_THRESHOLD = 0.85
+        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.5 이상이면 관련없다고 판단)
+        SIMILARITY_THRESHOLD = 0.5
         retrieved_pod_ids = []
         distances = results['distances'][0] if results['distances'] else []
         
@@ -126,5 +126,5 @@ class RagService: #친절한 주석 < -RAG서비스
             }
         ]
         
-        response = llm_instance.generate_response(messages, max_new_tokens=128, do_sample=True)
+        response = llm_instance.generate_response(messages, max_new_tokens=256, do_sample=True)
         return response

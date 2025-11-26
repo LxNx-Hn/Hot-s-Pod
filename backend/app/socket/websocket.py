@@ -69,7 +69,6 @@ async def websocket_chat_endpoint(websocket: WebSocket, pod_id: str):
                     message = json.loads(data)
                     message['pod_id'] = pod_id
                     
-                    # DB에 저장
                     try:
                         chat_message = ChatMessageCreate(
                             pod_id=int(pod_id),
@@ -79,11 +78,11 @@ async def websocket_chat_endpoint(websocket: WebSocket, pod_id: str):
                         chat_id = chat_repo.create_message(chat_message)
                         message['chat_id'] = chat_id
                         logger.info(f"Message saved: chat_id={chat_id}")
+                        
+                        await manager.broadcast(message, pod_id, exclude=websocket)
                     except Exception as e:
                         logger.error(f"Failed to save message: {e}")
-                    
-                    # 다른 클라이언트들에게 브로드캐스트
-                    await manager.broadcast(message, pod_id, exclude=websocket)
+                        await websocket.send_json({"error": "메시지 저장 실패"})
                     
                 except json.JSONDecodeError:
                     await websocket.send_json({"error": "Invalid JSON format"})

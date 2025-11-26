@@ -16,14 +16,7 @@ export default function Main() {
     const [limit,setLimit] = useState(30);
     const [offset,setOffset] = useState(0);
     const { data:podsData, isLoading:isPodsLoading, isError:isPodsError } = usePods({limit,offset});
-    const [open, setOpen] = useState(false);
     const [orderBy, setOrderBy] = useState("최신순");
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -64,12 +57,7 @@ export default function Main() {
     }
 
     const [pods,setPods] = useState([]);
-    useEffect(() => {
-        if (data)
-            console.log("[Main.container.jsx] me:", data);
-    }, [data]);
     useEffect(()=>{
-        console.log("[Main.container.jsx] podsData:",podsData);
         if (podsData && Array.isArray(podsData)) {
             setPods(podsData);
         }
