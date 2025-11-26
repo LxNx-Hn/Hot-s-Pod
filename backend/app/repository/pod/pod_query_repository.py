@@ -46,7 +46,8 @@ class PodQueryRepository:
                                                       ELSE 'https://via.placeholder.com/32'
                                                   END,
                             'content',            c.content,
-                            'created_at',         c.created_at
+                            'created_at',         c.created_at,
+                            'updated_at',         c.updated_at
                         )
                     ) AS comments
                 FROM comment c
