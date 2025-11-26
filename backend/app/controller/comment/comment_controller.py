@@ -70,7 +70,7 @@ async def update_comment(
         raise HTTPException(status_code=404, detail="Comment not found")
     
     # 본인만 수정 가능 (관리자도 타인 댓글은 수정 불가)
-    if comment['user_id'] != user_id:
+    if comment.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인만 댓글을 수정할 수 있습니다")
     
     # 수정 로직 (service에 구현 필요)
@@ -100,7 +100,7 @@ async def delete_comment(
         raise HTTPException(status_code=404, detail="Comment not found")
     
     # 본인 또는 관리자 권한 확인 (삭제된 댓글은 user_id가 NULL일 수 있음)
-    comment_user_id = comment['user_id'] if comment['user_id'] else -1
+    comment_user_id = comment.user_id if comment.user_id else -1
     require_owner_or_admin(db, comment_user_id, user_id)
     
     success = comment_service.delete_comment(comment_id)
