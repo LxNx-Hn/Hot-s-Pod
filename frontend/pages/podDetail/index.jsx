@@ -5,8 +5,8 @@ import { fetchChatMessages, sendChatMessage } from "@redux/slices/chatSlice";
 import { useMe } from "../../src/queries/useMe"; // 로그인 사용자 정보 (쿠키 기반)
 import { useMessage } from "../../src/queries/useMessage";
 import { usePodDetail } from "../../src/queries/usePods";
-import { joinPod } from "../../src/queries/usePodJoin";
-import { leavePod } from "../../src/queries/usePodLeave";
+import { useJoinPod } from "../../src/queries/usePodJoin";
+import { useLeavePod } from "../../src/queries/usePodLeave";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
@@ -172,6 +172,10 @@ export default function ChatPage() {
   const [ podIdState, setPodIdState] = useState(podId?podId:null)
   const { data: podDetail, isLoading: podDetailLoading, isError: podDetailError, refetch: refetchPodDetail} = usePodDetail(podIdState);
   const { data: messages, isLoading: messageLoading, isError: isMessageError, refetch: refetchMessages } = useMessage(podIdState);
+  
+  // Pod 참가/탈퇴 mutations
+  const joinPodMutation = useJoinPod();
+  const leavePodMutation = useLeavePod();
 
   const [commentText, setCommentText] = useState("");
   const [selectedCommentId, setSelectedCommentId] = useState(null);
@@ -425,7 +429,7 @@ export default function ChatPage() {
     try{
       if(me)
       {
-        await joinPod({"user_id":me.user_id,"pod_id":podId,"amount":1,"place_start":"","place_end":""});
+        await joinPodMutation.mutateAsync({"user_id":me.user_id,"pod_id":podId,"amount":1,"place_start":"","place_end":""});
         refetchPodDetail();
       }
     }
@@ -438,7 +442,7 @@ export default function ChatPage() {
   const leavePodFunc = async() => {
     try{
       if(me) {
-        await leavePod(me.user_id,podId);
+        await leavePodMutation.mutateAsync({"user_id":me.user_id,"pod_id":podId});
         refetchPodDetail();
       }
     }
