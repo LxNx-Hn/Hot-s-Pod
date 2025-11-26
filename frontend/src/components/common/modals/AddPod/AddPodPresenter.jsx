@@ -180,15 +180,20 @@ export default function AddPodPresenter({
                     </div>
                     <div key={9} className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">
-                            <div className="text-black text-[16px] font-medium w-full">장소 선택</div>
+                            <div className="text-black text-[16px] font-medium w-full">장소</div>
                             <Input
                                 name={"place"}
-                                value={form.selectedPlace?.address}
+                                value={form.selectedPlace?.address || ''}
                                 onChange={handleAddressChange}
-                                placeholder={"장소를 선택해주세요"}
+                                placeholder={"장소를 직접 입력해주세요 (예: 석장동 카페거리)"}
                                 status={errors.place ? "error" : ""}
                                 className={`${errors.selectedPlace?"border-1 border-[#EF4444] h-[45px] text-[16px] flex-1":"h-[45px] text-[16px] flex-1"}`}
-                                suffix={<SizeComponent Component={PlaceOutlinedIcon} fontSize={16} className={"text-[#BFBFBF]"} onClick={()=>{setMapOpen(true)}}/>}
+                                suffix={
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400">지도</span>
+                                        <SizeComponent Component={PlaceOutlinedIcon} fontSize={16} className={"text-[#BFBFBF] cursor-pointer hover:text-[#4368BA]"} onClick={()=>{setMapOpen(true)}}/>
+                                    </div>
+                                }
                             />
                         </div>
                         {errors.selectedPlace && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.selectedPlace}</p>}

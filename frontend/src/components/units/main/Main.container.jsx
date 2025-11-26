@@ -16,14 +16,7 @@ export default function Main() {
     const [limit,setLimit] = useState(30);
     const [offset,setOffset] = useState(0);
     const { data:podsData, isLoading:isPodsLoading, isError:isPodsError } = usePods({limit,offset});
-    const [open, setOpen] = useState(false);
     const [orderBy, setOrderBy] = useState("최신순");
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -36,13 +29,18 @@ export default function Main() {
         setIsPodModalOpen(false);
     };
 
+    const [isGenerating, setIsGenerating] = useState(false);
+
     const handleSavePod = async (podData) => {
         try {
+            setIsGenerating(true);
             await dispatch(createPod(podData)).unwrap();
             alert('POD이 생성되었습니다!');
             dispatch(fetchPods());
         } catch (error) {
             alert('POD 생성에 실패했습니다: ' + error.message);
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -58,14 +56,11 @@ export default function Main() {
         setOrderBy(event.target.value);
     }
 
-    const [pods,setPods] = useState(isPodsLoading?[]:podsData);
-    useEffect(() => {
-        if (data)
-            console.log("[Main.container.jsx] me:", data);
-    }, [data]);
+    const [pods,setPods] = useState([]);
     useEffect(()=>{
-        console.log("[Main.container.jsx] podsData:",podsData);
-        setPods(podsData);
+        if (podsData && Array.isArray(podsData)) {
+            setPods(podsData);
+        }
     },[podsData]);
     const sortedPods = useMemo(() => {
         if (!podsData) return [];
@@ -102,6 +97,7 @@ export default function Main() {
                 pods={sortedPods}
                 onOpenPodModal={handleOpenPodModal}
                 onPodClick={handlePodClick}
+                isGenerating={isGenerating}
             />
             <AddPodContainer 
                 isOpen={isPodModalOpen}

@@ -86,10 +86,6 @@ export default function MyPageUI() {
     const handleClickPod = async(pod_id) => {
         navigate(`/podDetail/${pod_id}`)
     }
-    useEffect(()=>{
-        console.log(myPodsData);
-    },[myPodsData])
-
     return(
         <div className="flex flex-col w-full gap-8">
             <div className="flex flex-row justify-between border-b-[#E9EBEE] border-b-[2px] p-6">
@@ -120,12 +116,13 @@ export default function MyPageUI() {
             </Box>
             
             <CustomTabPanel value={value} index={0}>
-                {myPodsData?myPodsData.map((value,index)=>{
+                {myPodsData?myPodsData.map((value)=>{
                         return (<Card
+                        key={value.pod_id}
                         title={value.title}
                         description={value.content}
                         peoples={`${value.current_member}/${value.max_peoples}`}
-                        image={imageData[value&&value.category_ids?value.category_ids[0]:0]}
+                        image={imageData[value?.category_ids?.[0] ?? 0]}
                         onClick={()=>{handleClickPod(value.pod_id);}}
                     />)
                     }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>
@@ -169,12 +166,13 @@ export default function MyPageUI() {
             </CustomTabPanel>
             <CustomTabPanel value={value} index={1}>
                 <div className='flex flex-col gap-2'>
-                    {podsData?podsData.map((value,index)=>{
+                    {podsData?podsData.map((value)=>{
                         return (<Card
+                        key={value.pod_id}
                         title={value.title}
                         description={value.content}
                         peoples={`${value.current_member}/${value.max_peoples}`}
-                        image={imageData[value&&value.category_ids?value.category_ids[0]:0]}
+                        image={imageData[value?.category_ids?.[0] ?? 0]}
                         onClick={()=>{handleClickPod(value.pod_id);}}
                     />)
                     }):<div className='py-4 border-b-[2px] border-b-[#EEEEEE]'>

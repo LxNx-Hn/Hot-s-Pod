@@ -22,9 +22,13 @@ class Settings(BaseSettings):
     KAKAO_REST_API_KEY: Optional[str] = None
     KAKAO_REDIRECT_URI: Optional[str] = None
     KAKAO_CLIENT_SECRET: Optional[str] = None
+    VITE_API_BASE_URL: Optional[str] = None
 
     # Frontend URL
     FRONTEND_URL: str = "http://localhost:5173"
+    
+    # Cookie Domain (크로스 도메인 쿠키 공유용, 예: ".runpod.net" 또는 None)
+    COOKIE_DOMAIN: Optional[str] = None
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
@@ -62,6 +66,13 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: Optional[str] = None
+    
+    # Netlify Production Domains (하드코딩)
+    NETLIFY_DOMAINS: List[str] = [
+        "https://hot-s-pod.netlify.app",
+        "https://hotspot.online",
+        "https://www.hotspot.online"
+    ]
 
     model_config = {
         "env_file": ".env",

@@ -40,13 +40,13 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
     }
 
     const handlePlaceChange = (data) => {
-        setForm({ ...form, selectedPlace: data });
+        if (data?.address) {
+            setForm({ ...form, selectedPlace: { ...form.selectedPlace, address: data.address, lat: data.lat, lng: data.lng } });
+        }
     }
-    const handleAddressChange = (data) => {
-        if(typeof data !=="SyntheticBaseEvent")
-            setForm({...form, selectedPlace: {...form.selectedPlace, address:data.target.value}});
-        else
-            setForm({...form, selectedPlace: {...form.selectedPlace, address:data}});
+    const handleAddressChange = (e) => {
+        const address = e.target.value;
+        setForm({...form, selectedPlace: { ...form.selectedPlace, address: address }});
     }
 
     const validateForm = () => {
@@ -62,7 +62,7 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
         if (!form.openDate) newErrors.openDate = "모임날짜를 선택하세요.";
         if (!form.openTime) newErrors.openTime = "모임시간을 선택하세요.";
         if (form.openDate&&form.openTime&&(new Date(date+"T"+form.openTime.toDate().toString().split(' ')[4])) - now <= 0) newErrors.openDateTime = "유효하지 않은 날짜 또는 시간입니다.";
-        if (!form.selectedPlace) newErrors.selectedPlace = "장소를 선택하세요.";
+        if (!form.selectedPlace?.address || !form.selectedPlace.address.trim()) newErrors.selectedPlace = "장소를 입력하세요.";
         if (!form.category || form.category==0) newErrors.category = "카테고리를 선택하세요.";
         setErrors(newErrors);
         setHasErrors(Object.keys(newErrors).length > 0);

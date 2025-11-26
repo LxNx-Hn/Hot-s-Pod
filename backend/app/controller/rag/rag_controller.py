@@ -6,7 +6,7 @@ from app.database import get_db_connection
 from app.repository.rag.rag_query_repository import RagQueryRepository
 from app.service.rag.rag_service import RagService
 from app.schemas.rag import RagSearchRequest, RagSearchResponse
-from app.schemas.pod import PodResponse
+from app.schemas.pod import PodListResponse
 from app.core.config import settings
 
 router = APIRouter(prefix="/rag", tags=["RAG Search"])
@@ -45,7 +45,7 @@ async def search_pods_with_rag(
         # Repository를 명시적으로 전달 (필수 파라미터)
         retrieved_pods_data = rag_service.search(request.query, rag_query_repo)
         llm_answer = rag_service.generate_answer(request.query, retrieved_pods_data)      
-        retrieved_pods = [PodResponse(**pod) for pod in retrieved_pods_data]
+        retrieved_pods = [PodListResponse(**pod) for pod in retrieved_pods_data]
         return RagSearchResponse(
             llm_answer=llm_answer,
             retrieved_pods=retrieved_pods,
@@ -55,9 +55,11 @@ async def search_pods_with_rag(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         import traceback
-        print(f"RAG 에러 상세: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"RAG 검색 중 오류가 발생했습니다: {str(e)}")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"RAG 에러 상세: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="RAG 검색 중 오류가 발생했습니다.")
 
 @router.get("/health", response_model=dict)
 async def rag_health_check():

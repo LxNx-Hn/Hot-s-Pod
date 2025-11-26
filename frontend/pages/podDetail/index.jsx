@@ -22,9 +22,11 @@ const getIndentClass = (level) => {
   if (level === 2) return "pl-8";
   return "pl-12"; // 3단계 이상은 고정
 };
+import { toSeoulDate, formatSeoul } from "../../src/utils/time";
+
 const time_delta_string = (string_time) => {
-    const createdAt = new Date(string_time);
-    const now = new Date();
+  const createdAt = toSeoulDate(string_time);
+  const now = new Date();
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
@@ -109,8 +111,10 @@ export default function ChatPage() {
   }
   // 로컬 상태
   const [messageText, setMessageText] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [wsMessages, setWsMessages] = useState([]);
   const [allMessages, setAllMessages] = useState(messages)
+  const [isSendingComment, setIsSendingComment] = useState(false);
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -232,7 +236,7 @@ export default function ChatPage() {
   // 메시지 전송
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
-
+    setIsSendingMessage(true);
     try {
       // 1) WebSocket 우선
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -248,10 +252,10 @@ export default function ChatPage() {
         // 2) WS가 닫혀 있으면 REST fallback
         await dispatch(
           sendChatMessage({
-            type:"user",
+            type: "user",
             pod_id: parseInt(podId, 10),
             user_id: me?.user_id ?? 0,
-            message: messageText,
+            content: messageText,
           })
         ).unwrap();
       }
@@ -259,6 +263,8 @@ export default function ChatPage() {
       refetchMessages();
     } catch (error) {
       alert("메시지 전송 실패: " + (error?.message || "unknown error"));
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -287,15 +293,30 @@ export default function ChatPage() {
   // 댓글 작성
   const handleSendComment = async () => {
     try {
+        if (!me || !me.user_id) {
+          alert('로그인이 필요합니다.');
+          return;
+        }
+
+        // parent_comment_id가 현재 로컬 comment 목록에 존재하는지 확인
+        const parentId = current_comments.some(c => c.comment_id === selectedCommentId)
+          ? selectedCommentId
+          : null;
+
+        setIsSendingComment(true);
         await dispatch(createComment({
-          "pod_id":podId,
-          "user_id":me?.user_id,
-          "content":commentText,
-          "parent_comment_id":selectedCommentId
+          pod_id: parseInt(podId, 10),
+          user_id: me.user_id,
+          content: commentText,
+          parent_comment_id: parentId,
         })).unwrap();
-        addLocalComment(commentText,selectedCommentId);
+
+        // 서버 상태를 신뢰하기 위해 상세를 다시 조회합니다 (중복 로컬 삽입 방지)
+        await refetchPodDetail();
         setCommentText("");
+        setIsSendingComment(false);
     } catch (error) {
+        setIsSendingComment(false);
         alert('댓글 생성에 실패했습니다: ' + error.message);
     }
     
@@ -315,10 +336,10 @@ export default function ChatPage() {
     return `${number}`
   }
   const date_toString = (date) => {
-    const newDate = new Date(date);
+    const newDate = toSeoulDate(date);
     const weekDays = ["일","월","화","수","목","금","토"];
     //요일 .getDay -> 0~6 > 일 ~ 토
-    var result = `${newDate.getFullYear()}.${zeroPadding(newDate.getMonth()+1)}.${zeroPadding(newDate.getDate())} ${weekDays[newDate.getDay()]}요일 ${zeroPadding(newDate.getHours())}:${zeroPadding(newDate.getMinutes())}:${zeroPadding(newDate.getSeconds())}`;
+    var result = formatSeoul(newDate, { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     return result;
   }
   const joinPodFunc = async() => {
@@ -336,9 +357,10 @@ export default function ChatPage() {
   }
   const leavePodFunc = async() => {
     try{
-      if(me)
+      if(me) {
         await leavePod(me.user_id,podId);
         refetchPodDetail();
+      }
     }
     catch(e)
     {
@@ -354,9 +376,6 @@ export default function ChatPage() {
         <div className="text-xl">Loading...</div>
       </div>
     );
-  }
-  else{
-    console.log(messages);
   }
   if (meError) {
     // 인증 실패 시 로그인 페이지로
@@ -402,7 +421,7 @@ export default function ChatPage() {
             <div className="font-bold text-xl">참여자({podDetail.current_member})</div>
             <div className="flex flex-row ml-3">
               {podDetail.members.length==0?<></>:podDetail.members.map((value,index)=>{
-                return (<img className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value.profile_picture} />)
+                return (<img key={value.user_id} className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value.profile_picture} />)
               })}
             </div>
           </div>
@@ -437,10 +456,8 @@ export default function ChatPage() {
                       <div className="flex flex-col">
                         <div className="bg-white rounded-lg px-4 py-1 shadow-sm text-xs text-gray-500 mb-1">
                           {msg.time
-                            ? new Date(msg.time).toLocaleString("ko-KR")
-                            : msg.timestamp
-                            ? new Date(msg.timestamp).toLocaleString("ko-KR")
-                            : "방금"}
+                              ? formatSeoul(msg.time)
+                              : (msg.timestamp ? formatSeoul(msg.timestamp) : "방금")}
                         </div>
                         <div className="flex flex-row w-ful justify-center">
                           <div className="bg-white rounded-lg px-2 py-1 shadow-sm w-fit text-sm whitespace-pre-wrap break-words">
@@ -453,11 +470,7 @@ export default function ChatPage() {
                     <div className="bg-white rounded-lg p-3 shadow-sm max-w-md">
                       <div className="text-xs text-gray-500 mb-1">
                         {msg.username ?? "-"} · {" "}
-                        {msg.time
-                          ? new Date(msg.time).toLocaleString("ko-KR")
-                          : msg.timestamp
-                          ? new Date(msg.timestamp).toLocaleString("ko-KR")
-                          : "방금"}
+                        {msg.time ? formatSeoul(msg.time) : (msg.timestamp ? formatSeoul(msg.timestamp) : "방금")}
                       </div>
                       <div className="text-sm whitespace-pre-wrap break-words">
                         {msg.content ?? msg.message}
@@ -480,12 +493,14 @@ export default function ChatPage() {
                   console.log("전송 ",e.target.value);
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="메시지를 입력하세요..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder={isSendingMessage?"전송 중...":"메시지를 입력하세요..."}
+                disabled={isSendingMessage}
+                className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${isSendingMessage? 'bg-gray-100 cursor-not-allowed': ''}`}
               />
               <button
                 onClick={handleSendMessage}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                disabled={isSendingMessage}
+                className={`px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm ${isSendingMessage? 'opacity-60 cursor-not-allowed': ''}`}
               >
                 전송
               </button>
@@ -505,11 +520,12 @@ export default function ChatPage() {
             onChange={(e) => setCommentText(e.target.value)}
             onSubmit={(e) => {console.log("전송 ",e.target.value);}}
             onKeyDown={handleKeyDownComment}
-            placeholder="댓글을 입력하세요..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={isSendingComment?"댓글 전송 중...":"댓글을 입력하세요..."}
+                disabled={isSendingComment}
+                className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSendingComment? 'bg-gray-100 cursor-not-allowed': ''}`}
           />
           <div className="flex flex-col justify-center">
-            <SizeComponent Component={KeyboardArrowUpIcon} onClick={handleSendComment} className=" bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors" fontSize={32}/>
+            <SizeComponent Component={KeyboardArrowUpIcon} onClick={handleSendComment} className={` bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors ${isSendingComment? 'opacity-60 cursor-not-allowed': ''}`} fontSize={32}/>
           </div>
         </div>
       </div>

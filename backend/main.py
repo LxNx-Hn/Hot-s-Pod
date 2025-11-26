@@ -3,6 +3,7 @@
 import threading
 import asyncio
 from contextlib import asynccontextmanager
+from app.core.config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -11,12 +12,13 @@ from app.controller.user import user_controller
 from app.controller.pod import pod_controller
 from app.controller.oauth import oauth_controller
 from app.controller.rag import rag_controller
+from app.controller.debug_controller import router as debug_router
 from app.service.rag.rag_worker_service import RagWorkerService
 from app.controller.comment import comment_controller
 from app.controller.chat import chat_controller  
 from app.controller.pod_member import pod_member_controller
 from app.socket import websocket
-from app.core.config import settings
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -79,13 +81,36 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# CORS origins 동적 구성
+cors_origins = [
+    "http://localhost:5173",
+]
+
+# Netlify 도메인 추가 (하드코딩)
+for domain in settings.NETLIFY_DOMAINS:
+    if domain not in cors_origins:
+        cors_origins.append(domain)
+
+# 커스텀 도메인 추가 (환경변수에서)
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in cors_origins:
+    cors_origins.append(settings.FRONTEND_URL)
+
+# VITE_API_BASE_URL이 있으면 추가
+if settings.VITE_API_BASE_URL and settings.VITE_API_BASE_URL not in cors_origins:
+    cors_origins.append(settings.VITE_API_BASE_URL)
+
+# CORS_ORIGINS 환경변수가 있으면 파싱해서 추가
+if settings.CORS_ORIGINS:
+    for origin in settings.CORS_ORIGINS.split(","):
+        origin = origin.strip()
+        if origin and origin not in cors_origins:
+            cors_origins.append(origin)
+
+logger.info(f"CORS origins: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://hot-s-pod.netlify.app",
-        "https://hotspod.online",
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -99,6 +124,7 @@ app.include_router(comment_controller.router)
 app.include_router(chat_controller.router)
 app.include_router(pod_member_controller.router)
 app.include_router(websocket.router)
+app.include_router(debug_router)
 
 @app.get("/", tags=["Root"])
 async def root():

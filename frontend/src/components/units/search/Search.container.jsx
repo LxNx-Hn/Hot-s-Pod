@@ -14,16 +14,47 @@ export default function SearchContainer() {
   const [isRAGOpened, setIsRAGOpened] = useState(false);
   const [RAGquery, setRAGquery] = useState("");
   const [RAGMessages,setRAGMessages] = useState([]);
+  const [isRAGGenerating, setIsRAGGenerating] = useState(false);
   
   const onSendRAG = async() => {
     if(RAGquery==="")
       return;
-    setRAGMessages([...RAGMessages,{llm_answer:'me',content:RAGquery}])
-    const response = await fetchRAG({
-            user_id:data.user_id,
-            query:RAGquery
-        });
-    setRAGMessages([...RAGMessages,{llm_answer:'me',content:RAGquery},response]);
+    
+    const currentQuery = RAGquery;
+    setRAGquery(""); // 입력창 즉시 비우기
+    
+    // Use functional updates to avoid stale-state and duplicate entries
+    setRAGMessages((prev) => [...prev, { llm_answer: 'me', content: currentQuery }]);
+    
+    try{
+      setIsRAGGenerating(true);
+      const response = await fetchRAG({
+        user_id: data?.user_id,
+        query: currentQuery,
+      });
+      console.log('[RAG] Response:', response);
+      
+      // 응답 데이터 검증
+      if (response && typeof response === 'object') {
+        setRAGMessages((prev) => [...prev, {
+          llm_answer: response.llm_answer || '응답을 받았습니다.',
+          retrieved_pods: response.retrieved_pods || [],
+          total_found: response.total_found || 0
+        }]);
+      } else {
+        throw new Error('잘못된 응답 형식');
+      }
+    }catch(e){
+      console.error('[RAG] Error:', e);
+      const errorMsg = e.response?.data?.detail || 'RAG 요청 중 오류가 발생했습니다.';
+      setRAGMessages((prev) => [...prev, { 
+        llm_answer: errorMsg, 
+        retrieved_pods: [], 
+        total_found: 0 
+      }]);
+    }finally{
+      setIsRAGGenerating(false);
+    }
   };
 
   const handleChange = (event) => {
@@ -79,6 +110,7 @@ export default function SearchContainer() {
       RAGquery={RAGquery}
       setRAGquery={setRAGquery}
       onSendRAG={onSendRAG}
+      isRAGGenerating={isRAGGenerating}
       RAGMessages={RAGMessages}
       setRAGMessages={setRAGMessages}
       orderBy={orderBy}

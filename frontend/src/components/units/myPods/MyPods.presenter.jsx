@@ -10,6 +10,7 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toSeoulDate } from "../../../utils/time";
 import Footer from "../../common/layout/footer/index.jsx"
 import { imageData } from "../../../data/categories.js";
 
@@ -69,7 +70,7 @@ export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPod
                         {pods&&pods.map((pod, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={() => onPodClick && onPodClick(idx + 1)}
+                                onClick={() => onPodClick && onPodClick(pod.pod_id)}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
                                 <img className='w-full h-24 rounded-t-lg' src={imageData[pod&&pod.category_ids?pod.category_ids[0]:0]}/>
@@ -78,9 +79,9 @@ export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPod
                                     <div className="text-[#888888] text-xs">{pod.content}</div>
                                     <div className='flex flex-row justify-between'>
                                         <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
-                                        {Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
+                                        {Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
                                         <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>:
-                                        <div className='text-[#FDC862] text-xs font-semibold'>D-{Math.ceil((new Date(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}</div>
+                                        <div className='text-[#FDC862] text-xs font-semibold'>D-{Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}</div>
                                         }
                                     </div>
                                     <div className='flex flex-row gap-1'>

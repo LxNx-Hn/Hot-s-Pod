@@ -24,7 +24,6 @@ async def kakao_login():
         f"?client_id={settings.KAKAO_REST_API_KEY}"
         f"&redirect_uri={settings.KAKAO_REDIRECT_URI}"
         f"&response_type=code"
-        f"&prompt=none"  # 이미 로그인되어 있으면 자동 인증
     )
     return RedirectResponse(url=kakao_auth_url)
 @router.get("/kakao/callback")
@@ -38,7 +37,8 @@ async def kakao_callback(
         # 에러가 있으면 프론트엔드로 리다이렉트
         if error:
             print(f"[oauth] 카카오 에러: {error} - {error_description}")
-            redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?error={error}"
+            # 로그인 페이지로 바로 보내기
+            redirect_url = f"{settings.FRONTEND_URL}/login?error={error}&message={error_description or ''}"
             return RedirectResponse(url=redirect_url, status_code=302)
         
         # code가 없으면 에러
@@ -107,9 +107,11 @@ async def kakao_callback(
         # 5) 쿠키 + 리다이렉트
         redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?ok=1"
         resp = RedirectResponse(url=redirect_url, status_code=302)
-        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE)
-        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE)
-        print("[oauth] set cookies & redirect ->", redirect_url)
+        # COOKIE_DOMAIN이 설정되어 있으면 크로스 도메인 쿠키 설정
+        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
+        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
+        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
+        print(f"[oauth] set cookies (domain={cookie_domain}) & redirect -> {redirect_url}")
         return resp
 
     except requests.exceptions.RequestException as e:
@@ -139,20 +141,17 @@ async def refresh_token(request: Request, response: Response):
         data={"user_id": user_id},
         expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE)
+    cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
+    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
     return {"ok": True}
 
 
 @router.post("/logout")
-async def logout(request: Request,response: Response):
+async def logout(request: Request, response: Response):
     try:
-        # logout_response = requests.post(
-        #     "https://kapi.kakao.com/v1/user/logout",
-        #     headers={"Authorization": f"Bearer {access_token}"},
-        #     timeout=10
-        # )
-        # logout_response.raise_for_status()
-        response.delete_cookie("access_token")
+        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
+        clear_auth_cookies(response, domain=cookie_domain)
         return {"message": "로그아웃 성공"}
-    except requests.exceptions.RequestException:
-        raise HTTPException(status_code=400, detail="카카오 로그아웃 처리 중 오류가 발생했습니다.")
+    except Exception as e:
+        print(f"[oauth] logout error: {e}")
+        raise HTTPException(status_code=400, detail="로그아웃 처리 중 오류가 발생했습니다.")

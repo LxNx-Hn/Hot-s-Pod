@@ -12,12 +12,33 @@ export default function OAuthCallback() {
 
   useEffect(() => {
     (async () => {
+      // URL에서 에러 파라미터 확인
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get('error');
+      const ok = params.get('ok');
+      
+      // 에러가 있으면 바로 로그인 페이지로
+      if (error) {
+        console.log('[OAuth] 카카오 인증 에러:', error);
+        navigate("/login", { replace: true });
+        return;
+      }
+      
+      // ok 파라미터가 없으면 잘못된 접근
+      if (!ok) {
+        console.log('[OAuth] 잘못된 콜백 접근');
+        navigate("/login", { replace: true });
+        return;
+      }
+      
+      // 로그인 성공 - 사용자 정보 조회
       try {
         const { data } = await api.get("/users/me");
         dispatch(setUser({ userName: data.username || data.nickname || "사용자" }));
         qc.invalidateQueries({ queryKey: ["me"] });
         navigate("/", { replace: true });
-      } catch {
+      } catch (err) {
+        console.error('[OAuth] 사용자 정보 조회 실패:', err);
         navigate("/login", { replace: true });
       }
     })();

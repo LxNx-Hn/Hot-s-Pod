@@ -21,7 +21,17 @@ class RagQueryRepository: #RAG할때 쓰는 전용 쿼리
         pod_ids_json = json.dumps(pod_ids)       
         with self.db.cursor() as cursor:
             cursor.callproc('sp_FilterPods', (pod_ids_json, place_keyword, category_id))
-            return cursor.fetchall()
+            results = cursor.fetchall()
+            
+            # category_ids가 JSON 문자열이면 파싱
+            for result in results:
+                if 'category_ids' in result and result['category_ids']:
+                    if isinstance(result['category_ids'], str):
+                        result['category_ids'] = json.loads(result['category_ids'])
+                else:
+                    result['category_ids'] = []
+            
+            return results
     def get_all_categories(self) -> List[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             cursor.callproc('sp_GetAllCategories')
