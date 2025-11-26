@@ -161,7 +161,10 @@ export default function MyPageUI() {
                 <div className='text-xl font-bold'>마이 페이지</div>
             </div>
             <div className='flex flex-row w-full justify-center'>
-                <img src={user?.profile_picture} className='w-24 h-24 rounded-full border-purple-600 border-[3px]'/>
+                <img 
+                    src={user?.profile_picture_enabled ? user?.profile_picture : 'https://via.placeholder.com/96'} 
+                    className='w-24 h-24 rounded-full border-purple-600 border-[3px]'
+                />
             </div>
             <div className='flex flex-row justify-center font-bold text-2xl'>
                 {user?.username}
