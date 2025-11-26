@@ -32,6 +32,9 @@ class UserCommandRepository:
             if 'phonenumber' in update_data:
                 update_fields.append("phonenumber = %s")
                 values.append(update_data['phonenumber'])
+            if 'profile_picture_enabled' in update_data:
+                update_fields.append("profile_picture_enabled = %s")
+                values.append(update_data['profile_picture_enabled'])
             
             if not update_fields:
                 return False

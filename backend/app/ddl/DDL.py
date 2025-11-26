@@ -34,6 +34,7 @@ CREATE TABLE `user` (
   `username` VARCHAR(100) NOT NULL,
   `phonenumber` VARCHAR(20) NULL,
   `is_admin` BOOLEAN NOT NULL DEFAULT FALSE,
+  `profile_picture_enabled` BOOLEAN NOT NULL DEFAULT TRUE,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   INDEX `IDX_User_username` (`username`),
