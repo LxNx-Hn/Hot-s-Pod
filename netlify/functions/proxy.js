@@ -2,7 +2,8 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 exports.handler = async function(event, context) {
   try {
-    const backendUrl = process.env.RUNPOD_BACKEND_URL || process.env.RUNPOD_BACKEND_POD_ID;
+    // Prefer explicit backend URL env, then pod id, then VITE_API_BASE_URL if provided
+    const backendUrl = process.env.RUNPOD_BACKEND_URL || process.env.RUNPOD_BACKEND_POD_ID || process.env.VITE_API_BASE_URL;
     if (!backendUrl) {
       return { statusCode: 500, body: JSON.stringify({ error: 'RUNPOD_BACKEND_URL not set' }) };
     }
