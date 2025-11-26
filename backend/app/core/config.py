@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     KAKAO_REST_API_KEY: Optional[str] = None
     KAKAO_REDIRECT_URI: Optional[str] = None
     KAKAO_CLIENT_SECRET: Optional[str] = None
+    VITE_API_BASE_URL: Optional[str] = None
 
     # JWT
     JWT_SECRET_KEY: str = "change-this-in-production"

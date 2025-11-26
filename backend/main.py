@@ -2,6 +2,7 @@
 import threading
 import asyncio
 from contextlib import asynccontextmanager
+from app.core.config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -83,7 +84,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        settings.VITE_API_BASE_URL,
+        "http://localhost:5173",
+        "https://hot-s-pod.netlify.app",
+        "https://hotspod.online"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
