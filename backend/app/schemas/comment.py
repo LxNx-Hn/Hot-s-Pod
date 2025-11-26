@@ -18,6 +18,7 @@ class CommentResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     username: Optional[str] = None
+    profile_picture: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -5,11 +5,12 @@ from typing import List, Optional
 
 class PodComment(BaseModel):
     comment_id: int
-    user_id: int
-    username: str
+    user_id: Optional[int] = None  # 삭제된 댓글은 NULL
+    username: Optional[str] = None  # 삭제된 댓글은 NULL
     profile_picture: Optional[str] = None
     content: Optional[str] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
     parent_comment_id: Optional[int] = None
 
 class PodCategory(BaseModel):
