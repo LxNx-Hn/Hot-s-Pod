@@ -49,6 +49,37 @@ async def get_pod_comments(
     """Pod의 모든 댓글 조회 (계층 구조)"""
     return comment_service.get_pod_comments(pod_id)
 
+@router.put("/{comment_id}", response_model=dict)
+async def update_comment(
+    comment_id: int,
+    content: str,
+    request: Request,
+    db: Connection = Depends(get_db_connection),
+    comment_service: CommentService = Depends(get_comment_service)
+):
+    """댓글 수정 (본인만 가능, 관리자도 타인 댓글은 수정 불가)"""
+    from app.utils.permissions import get_user_from_token
+    
+    # JWT 토큰에서 사용자 정보 추출
+    user_payload = get_user_from_token(request)
+    user_id = user_payload.get('user_id')
+    
+    # 댓글 조회
+    comment = comment_service.get_comment(comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # 본인만 수정 가능 (관리자도 타인 댓글은 수정 불가)
+    if comment['user_id'] != user_id:
+        raise HTTPException(status_code=403, detail="본인만 댓글을 수정할 수 있습니다")
+    
+    # 수정 로직 (service에 구현 필요)
+    success = comment_service.update_comment(comment_id, content)
+    if not success:
+        raise HTTPException(status_code=500, detail="댓글 수정에 실패했습니다")
+    
+    return {"message": "Comment updated successfully"}
+
 @router.delete("/{comment_id}", response_model=dict)
 async def delete_comment(
     comment_id: int,

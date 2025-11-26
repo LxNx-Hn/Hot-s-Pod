@@ -36,6 +36,14 @@ class CommentService:
         
         return root_comments
     
+    def update_comment(self, comment_id: int, content: str) -> bool:
+        """댓글 수정"""
+        return self.command_repo.update_comment(comment_id, content)
+    
     def delete_comment(self, comment_id: int) -> bool:
         """댓글 삭제"""
         return self.command_repo.delete_comment(comment_id)
+    
+    def update_comment(self, comment_id: int, content: str) -> bool:
+        """댓글 수정"""
+        return self.command_repo.update_comment(comment_id, content)

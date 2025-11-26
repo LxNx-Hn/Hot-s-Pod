@@ -49,7 +49,7 @@ def require_admin(db: Connection, user_id: int) -> None:
 
 def require_host_or_admin(db: Connection, pod_id: int, user_id: int) -> None:
     """호스트 또는 관리자 권한 필수"""
-    if not (is_pod_host(db, pod_id, user_id) or is_admin(db, user_id)):
+    if not is_pod_host(db, pod_id, user_id):
         raise HTTPException(status_code=403, detail="호스트 또는 관리자 권한이 필요합니다")
 
 

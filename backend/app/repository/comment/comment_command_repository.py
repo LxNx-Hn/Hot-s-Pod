@@ -31,6 +31,14 @@ class CommentCommandRepository:
                 self.db.rollback()
                 raise
     
+    def update_comment(self, comment_id: int, content: str) -> bool:
+        """댓글 내용 수정"""
+        with self.db.cursor() as cursor:
+            sql = "UPDATE comment SET content = %s WHERE comment_id = %s"
+            cursor.execute(sql, (content, comment_id))
+            self.db.commit()
+            return cursor.rowcount > 0
+    
     def delete_comment(self, comment_id: int) -> bool:
         """댓글 소프트 삭제 (내용과 사용자 정보 변경)"""
         with self.db.cursor() as cursor:
@@ -47,5 +55,13 @@ class CommentCommandRepository:
                 sql = "DELETE FROM comment WHERE comment_id = %s"
             
             cursor.execute(sql, (comment_id,))
+            self.db.commit()
+            return cursor.rowcount > 0
+    
+    def update_comment(self, comment_id: int, content: str) -> bool:
+        """댓글 내용 수정"""
+        with self.db.cursor() as cursor:
+            sql = "UPDATE comment SET content = %s WHERE comment_id = %s"
+            cursor.execute(sql, (content, comment_id))
             self.db.commit()
             return cursor.rowcount > 0
