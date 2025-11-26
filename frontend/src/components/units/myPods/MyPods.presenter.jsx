@@ -13,10 +13,17 @@ import { toSeoulDate } from "../../../utils/time";
 import Footer from "../../common/layout/footer/index.jsx"
 import { imageData } from "../../../data/categories.js";
 
-export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPodClick,pods}) {
+export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPodClick,pods,onOpenPodModal}) {
     const navigate = useNavigate();
     const [active, setActive] = useState(2);
     return(<div className="flex flex-col w-full min-h-screen bg-[#F6F7F8] min-w-96">
+            <div className="fixed bottom-28 right-10 w-10 h-10 rounded-full bg-[#FF7A5A] cursor-pointer" onClick={()=>{onOpenPodModal()}}>
+                <div className='h-full w-full flex flex-col justify-center'>
+                    <div className='w-full flex flex-row justify-center text-[#FFFFFF] font-bold text-xl pb-1'>
+                        +
+                    </div>
+                </div>
+            </div>
             {/* 헤더 */}
             <div className="flex flex-row justify-between p-4 bg-white shadow-sm">
                 <div className="flex flex-row gap-4 justify-center cursor-pointer" onClick={()=>{navigate("/");}}>
@@ -77,10 +84,12 @@ export default function MyPodsPresenter({query,setQuery,orderBy,setOrderBy,onPod
                                     <div className="text-[#888888] text-xs">{pod.content}</div>
                                     <div className='flex flex-row justify-between'>
                                         <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
-                                        {Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))==0?
-                                        <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>:
-                                        <div className='text-[#FDC862] text-xs font-semibold'>D-{Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24))}</div>
-                                        }
+                                        {(() => {
+                                            const daysLeft = Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24));
+                                            if (daysLeft === 0) return <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>;
+                                            if (daysLeft < 0) return <div className='text-gray-500 text-xs font-semibold'>마감됨</div>;
+                                            return <div className='text-[#FDC862] text-xs font-semibold'>D-{daysLeft}</div>;
+                                        })()}
                                     </div>
                                     <div className='flex flex-row gap-1'>
                                         <SizeComponent Component={PlaceOutlinedIcon} fontSize={16}/>

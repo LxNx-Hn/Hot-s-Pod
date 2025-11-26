@@ -117,6 +117,7 @@ export default function ChatPage() {
   const [isSendingComment, setIsSendingComment] = useState(false);
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
+  const messageInputRef = useRef(null);
 
   // 스크롤 최하단
   const scrollToBottom = () => {
@@ -259,6 +260,8 @@ export default function ChatPage() {
       }
       setMessageText("");
       refetchMessages();
+      // 전송 후 자동으로 입력창에 포커스
+      setTimeout(() => messageInputRef.current?.focus(), 0);
     } catch (error) {
       alert("메시지 전송 실패: " + (error?.message || "unknown error"));
     } finally {
@@ -486,6 +489,7 @@ export default function ChatPage() {
           <div className="p-4 shadow-lg">
             <div className="flex flex-row gap-2">
               <input
+                ref={messageInputRef}
                 type="text"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -527,19 +531,28 @@ export default function ChatPage() {
       </div>
       <div className="w-full flex flex-col justify-center py-4">
         <div className="flex flex-row w-full gap-2">
-          {isMyPod?<div
-              className="flex flex-row w-3/4 justify-center bg-red-500 font-bold text-white py-2 rounded-xl cursor-pointer"
-              onClick={leavePodFunc}
-          >
-            나가기
-          </div>:<div
-              className="flex flex-row w-3/4 justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer"
+          {isMyPod ? (
+            <>
+              <div
+                className="flex flex-row w-3/4 justify-center bg-red-500 font-bold text-white py-2 rounded-xl cursor-pointer"
+                onClick={leavePodFunc}
+              >
+                나가기
+              </div>
+              <div 
+                className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" 
+                onClick={() => {setIsChatOpened(true)}}
+              >
+                채팅 열기
+              </div>
+            </>
+          ) : (
+            <div
+              className="flex flex-row w-full justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer"
               onClick={joinPodFunc}
-          >
-            참여하기
-          </div>}
-          {isMyPod && (
-            <div className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" onClick={()=>{setIsChatOpened(true)}}>채팅 열기</div>
+            >
+              참여하기
+            </div>
           )}
         </div>
         

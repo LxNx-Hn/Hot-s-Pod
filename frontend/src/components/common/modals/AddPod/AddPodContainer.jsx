@@ -23,7 +23,10 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
     const [hasErrors, setHasErrors] = useState(false);
 
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        // 숫자 필드는 정수로 변환
+        const parsedValue = (name === 'minPeople' || name === 'maxPeople') ? parseInt(value, 10) || 0 : value;
+        setForm({ ...form, [name]: parsedValue });
     };
 
     const handleCategory = (value) => {

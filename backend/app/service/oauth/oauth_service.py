@@ -37,6 +37,9 @@ class OAuthService:
         if existing_user:
             user_id = existing_user['user_id']
             is_new_user = False
+            # 기존 사용자의 닉네임이 user 테이블에 없으면 업데이트
+            if not existing_user.get('username') or existing_user['username'].startswith('사용자'):
+                self.user_command.update_username(user_id, user_name)
         else:
             user_id = self.user_command.create_user(username=user_name)
             is_new_user = True
