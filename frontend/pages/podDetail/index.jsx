@@ -64,8 +64,8 @@ const CommentItem = ({
   const isMyComment = comment.user_id === currentUserId;
   const isDeleted = comment.user_id === null || comment.content === "[삭제된 댓글입니다]";
   const isWithdrawnUser = comment.username === "탈퇴한 회원";
-  const canDelete = isMyComment && !isDeleted; // 본인 댓글만 삭제 가능
-  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 본인 댓글만 수정 가능
+  const canDelete = (isMyComment || isAdmin) && !isDeleted; // 본인 또는 관리자
+  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 본인만
   const isEditing = editingCommentId === comment.comment_id;
   const isEdited = comment.updated_at && comment.created_at !== comment.updated_at;
 
@@ -567,8 +567,9 @@ export default function ChatPage() {
     }
   };
 
-  // 호스트만 수정/삭제 가능
+  // 호스트 또는 관리자
   const isHost = me && podDetail?.host_user_id === me.user_id;
+  const isHostOrAdmin = isHost || (me?.is_admin || false);
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
   if (meLoading || messageLoading || podDetailLoading) {
@@ -598,20 +599,24 @@ export default function ChatPage() {
       <div className="flex flex-col gap-8 py-8">
         <div className="flex flex-row justify-between items-center">
           <div className="text-3xl font-black">{podDetail.title}</div>
-          {isHost && (
+          {(isHost || isHostOrAdmin) && (
             <div className="flex flex-row gap-2">
-              <button
-                onClick={handleOpenEditPodModal}
-                className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                수정
-              </button>
-              <button
-                onClick={handleDeletePod}
-                className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
-              >
-                삭제
-              </button>
+              {isHost && (
+                <button
+                  onClick={handleOpenEditPodModal}
+                  className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  수정
+                </button>
+              )}
+              {isHostOrAdmin && (
+                <button
+                  onClick={handleDeletePod}
+                  className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  삭제
+                </button>
+              )}
             </div>
           )}
         </div>
