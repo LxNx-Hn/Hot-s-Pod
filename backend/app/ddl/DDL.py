@@ -108,7 +108,7 @@ CREATE TABLE `pod_member` (
 CREATE TABLE `comment` (
   `comment_id` INT NOT NULL AUTO_INCREMENT,
   `pod_id` INT NOT NULL,
-  `user_id` INT NOT NULL,
+  `user_id` INT NULL,
   `content` TEXT NOT NULL,
   `parent_comment_id` INT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -116,7 +116,7 @@ CREATE TABLE `comment` (
   PRIMARY KEY (`comment_id`),
   INDEX `IDX_Comment_pod` (`pod_id`),
   CONSTRAINT `FK_Pod_TO_Comment` FOREIGN KEY (`pod_id`) REFERENCES `pod` (`pod_id`) ON DELETE CASCADE,
-  CONSTRAINT `FK_User_TO_Comment` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_User_TO_Comment` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE SET NULL,
   CONSTRAINT `FK_Comment_TO_Comment` FOREIGN KEY (`parent_comment_id`) REFERENCES `comment` (`comment_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

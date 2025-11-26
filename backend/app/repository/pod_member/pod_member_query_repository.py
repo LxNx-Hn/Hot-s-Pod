@@ -11,9 +11,12 @@ class PodMemberQueryRepository:
         """Pod의 모든 참가자 조회"""
         with self.db.cursor() as cursor:
             sql = """
-                SELECT pm.*, u.username, u.phonenumber
+                SELECT 
+                    pm.*,
+                    COALESCE(u.username, '탈퇴한 회원') as username,
+                    u.phonenumber
                 FROM pod_member pm
-                JOIN user u ON pm.user_id = u.user_id
+                LEFT JOIN user u ON pm.user_id = u.user_id
                 WHERE pm.pod_id = %s
                 ORDER BY pm.joined_at ASC
             """

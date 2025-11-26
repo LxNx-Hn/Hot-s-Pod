@@ -26,7 +26,7 @@ import { toSeoulDate, formatSeoul } from "../../src/utils/time";
 
 const time_delta_string = (string_time) => {
   const createdAt = toSeoulDate(string_time);
-  const now = new Date(); // 현재 로컬 시간 사용
+  const now = toSeoulDate(new Date()); // 현재 시간도 toSeoulDate 처리
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
@@ -501,10 +501,11 @@ export default function ChatPage() {
         setEditingCommentId(null);
         setEditingCommentText("");
       } else {
-        throw new Error('수정 실패');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '수정 실패');
       }
     } catch (error) {
-      alert('댓글 수정에 실패했습니다.');
+      alert(error.message || '댓글 수정에 실패했습니다.');
     }
   };
 
@@ -522,7 +523,8 @@ export default function ChatPage() {
         alert('POD가 삭제되었습니다.');
         navigate('/');
       } else {
-        throw new Error('삭제 권한이 없습니다.');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '삭제 권한이 없습니다.');
       }
     } catch (error) {
       alert('POD 삭제에 실패했습니다: ' + error.message);

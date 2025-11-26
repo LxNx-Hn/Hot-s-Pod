@@ -93,12 +93,18 @@ async def update_pod(
     db: Connection = Depends(get_db_connection),
     pod_service: PodService = Depends(get_pod_service)
 ):
-    """Pod 수정 (호스트 또는 관리자만 가능)"""
+    """수정 (호스트 본인만 가능)"""
     user_payload = get_user_from_token(request)
     user_id = user_payload.get('user_id')
     
-    # 호스트 또는 관리자 권한 확인
-    require_host_or_admin(db, pod_id, user_id)
+    # Pod 조회
+    pod = pod_service.get_pod(pod_id)
+    if not pod:
+        raise HTTPException(status_code=404, detail="Pod를 찾을 수 없습니다")
+    
+    # 호스트 본인만 수정 가능
+    if pod.host_user_id != user_id:
+        raise HTTPException(status_code=403, detail="호스트만 Pod를 수정할 수 있습니다")
     
     # 수정할 데이터만 dict로 변환
     update_data = pod_data.model_dump(exclude_unset=True)
