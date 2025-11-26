@@ -61,8 +61,8 @@ class RagService: #친절한 주석 < -RAG서비스
             logger.warning("No vector search results") # 진짜 예외처리 안하는데 코파일럿이 이거보고 죽일라해서 넣음
             return []
         
-        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 0.73 이상이면 관련없다고 판단)
-        SIMILARITY_THRESHOLD = 0.73
+        # 유사도 임계값 필터링 (distance가 낮을수록 유사, 해당값 이상이면 관련없다고 판단)
+        SIMILARITY_THRESHOLD = 0.7150
         retrieved_pod_ids = []
         pod_similarity_map = {}
         distances = results['distances'][0] if results['distances'] else []
@@ -103,6 +103,9 @@ class RagService: #친절한 주석 < -RAG서비스
         if len(retrieved_pod_ids) > 0 and len(final_pods) == 0:
             logger.warning("⚠️ RDB 필터링에서 모든 POD가 제외됨!")
             logger.warning("   → 가능한 원인: 1) event_time이 과거 2) place/category 불일치 3) 삭제된 POD")
+        
+        # 유사도 순으로 정렬 (높은 순서대로)
+        final_pods.sort(key=lambda pod: pod_similarity_map.get(pod.get('pod_id'), 0), reverse=True)
         
         logger.info(f"\n=== 최종 결과 ===")
         logger.info(f"Final results: {len(final_pods)} pods")
