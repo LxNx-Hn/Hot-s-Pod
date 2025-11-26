@@ -42,6 +42,7 @@ class PodQueryRepository:
                             'user_id',            c.user_id,
                             'username',           COALESCE(cu.username, '탈퇴한 회원'),
                             'profile_picture',    CASE
+                                                      WHEN cu.profile_picture_enabled IS NULL THEN 'https://via.placeholder.com/32'
                                                       WHEN cu.profile_picture_enabled = 1 THEN COALESCE(ka.profile_picture, 'https://via.placeholder.com/32')
                                                       ELSE 'https://via.placeholder.com/32'
                                                   END,
@@ -82,6 +83,7 @@ class PodQueryRepository:
                             'user_id',         pm2.user_id,
                             'username',        COALESCE(u2.username, '탈퇴한 회원'),
                             'profile_picture', CASE
+                                                   WHEN u2.profile_picture_enabled IS NULL THEN 'https://via.placeholder.com/32'
                                                    WHEN u2.profile_picture_enabled = 1 THEN COALESCE(ka2.profile_picture, 'https://via.placeholder.com/32')
                                                    ELSE 'https://via.placeholder.com/32'
                                                END,
