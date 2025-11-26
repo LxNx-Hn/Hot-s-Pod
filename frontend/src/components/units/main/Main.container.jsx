@@ -36,13 +36,18 @@ export default function Main() {
         setIsPodModalOpen(false);
     };
 
+    const [isGenerating, setIsGenerating] = useState(false);
+
     const handleSavePod = async (podData) => {
         try {
+            setIsGenerating(true);
             await dispatch(createPod(podData)).unwrap();
             alert('POD이 생성되었습니다!');
             dispatch(fetchPods());
         } catch (error) {
             alert('POD 생성에 실패했습니다: ' + error.message);
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -102,6 +107,7 @@ export default function Main() {
                 pods={sortedPods}
                 onOpenPodModal={handleOpenPodModal}
                 onPodClick={handlePodClick}
+                isGenerating={isGenerating}
             />
             <AddPodContainer 
                 isOpen={isPodModalOpen}

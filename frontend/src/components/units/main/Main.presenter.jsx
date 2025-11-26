@@ -9,10 +9,11 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import { useState } from "react";
+import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from "react-router-dom";
 import Footer from "../../common/layout/footer/index.jsx"
 import { imageData } from "../../../data/categories.js";
-export default function MainUI({categories, selectedCategory, setSelectedCategory, orderBy, handleChange, pods, onOpenPodModal, onPodClick}) {
+export default function MainUI({categories, selectedCategory, setSelectedCategory, orderBy, handleChange, pods, onOpenPodModal, onPodClick, isGenerating = false}) {
     const navigate = useNavigate();
     const [active, setActive] = useState(0);
     return (
@@ -47,7 +48,19 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                         <div className='flex flex-col justify-center p-2'>
                             <SearchOutlinedIcon/>
                         </div>
-                        <input type='text' placeholder='관심사, 지역, 키워드로 검색해보세요.' className='min-w-80 p-2'/>
+                        <div className='relative w-full flex items-center'>
+                            <input
+                                type='text'
+                                placeholder={isGenerating ? '생성 중... 잠시만 기다려주세요.' : '관심사, 지역, 키워드로 검색해보세요.'}
+                                className={`min-w-80 p-2 w-full ${isGenerating ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                disabled={isGenerating}
+                            />
+                            {isGenerating && (
+                                <div className='absolute right-2'>
+                                    <CircularProgress size={18} />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-row justify-end w-full">

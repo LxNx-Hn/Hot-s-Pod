@@ -14,17 +14,26 @@ export default function SearchContainer() {
   const [isRAGOpened, setIsRAGOpened] = useState(false);
   const [RAGquery, setRAGquery] = useState("");
   const [RAGMessages,setRAGMessages] = useState([]);
+  const [isRAGGenerating, setIsRAGGenerating] = useState(false);
   
   const onSendRAG = async() => {
     if(RAGquery==="")
       return;
     // Use functional updates to avoid stale-state and duplicate entries
     setRAGMessages((prev) => [...prev, { llm_answer: 'me', content: RAGquery }]);
-    const response = await fetchRAG({
-      user_id: data.user_id,
-      query: RAGquery,
-    });
-    setRAGMessages((prev) => [...prev, response]);
+    try{
+      setIsRAGGenerating(true);
+      const response = await fetchRAG({
+        user_id: data?.user_id,
+        query: RAGquery,
+      });
+      setRAGMessages((prev) => [...prev, response]);
+    }catch(e){
+      console.error('RAG error', e);
+      setRAGMessages((prev) => [...prev, { llm_answer: 'error', content: 'RAG 요청 중 오류가 발생했습니다.' }]);
+    }finally{
+      setIsRAGGenerating(false);
+    }
   };
 
   const handleChange = (event) => {
@@ -80,6 +89,7 @@ export default function SearchContainer() {
       RAGquery={RAGquery}
       setRAGquery={setRAGquery}
       onSendRAG={onSendRAG}
+      isRAGGenerating={isRAGGenerating}
       RAGMessages={RAGMessages}
       setRAGMessages={setRAGMessages}
       orderBy={orderBy}

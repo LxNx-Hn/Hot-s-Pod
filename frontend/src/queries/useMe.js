@@ -3,8 +3,18 @@ import { api } from "../api/api";
 import { useNavigate } from "react-router-dom";
 
 async function fetchMe({ signal }) {
-  const res = await api.get("/users/me", { signal });
-  return res.data;
+  // 안전장치: 요청이 오래 걸리면 타임아웃 처리하여 무한 로딩을 방지
+  const timeoutMs = 8000;
+  const timeoutPromise = new Promise((_, reject) => {
+    const id = setTimeout(() => {
+      clearTimeout(id);
+      reject(new Error("fetchMe timeout"));
+    }, timeoutMs);
+  });
+
+  const reqPromise = api.get("/users/me", { signal }).then((res) => res.data);
+
+  return Promise.race([reqPromise, timeoutPromise]);
 }
 
 export function useMe() {
