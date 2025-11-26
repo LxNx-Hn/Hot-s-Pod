@@ -12,6 +12,7 @@ export function useJoinPod() {
     mutationFn: joinPod,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pods"] });
+      qc.invalidateQueries({ queryKey: ["mypods"] }); // Joined Pods 새로고침
     },
   });
 }

@@ -23,11 +23,6 @@ export default function Footer({active,setActive}){
             icon: SearchOutlinedIcon
         },
         {
-            title:"내 모임",
-            path:"/myPods",
-            icon: GroupsOutlinedIcon
-        },
-        {
             title:"마이 페이지",
             path:"/myPage",
             icon: PermIdentityOutlinedIcon

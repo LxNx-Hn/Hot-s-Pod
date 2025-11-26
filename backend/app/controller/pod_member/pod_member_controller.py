@@ -6,6 +6,7 @@ from app.repository.pod_member.pod_member_command_repository import PodMemberCom
 from app.repository.pod_member.pod_member_query_repository import PodMemberQueryRepository
 from app.service.pod_member.pod_member_service import PodMemberService
 from app.schemas.pod_member import PodMemberJoinRequest, PodMemberResponse
+from app.utils.permissions import is_admin
 from typing import List
 
 router = APIRouter(prefix="/pod-members", tags=["Pod Members"])
@@ -18,11 +19,14 @@ def get_pod_member_service(db: Connection = Depends(get_db_connection)) -> PodMe
 @router.post("/join", response_model=dict, status_code=201)
 async def join_pod(
     join_data: PodMemberJoinRequest,
+    db: Connection = Depends(get_db_connection),
     service: PodMemberService = Depends(get_pod_member_service)
 ):
     """Pod 참가"""
     try:
-        member_id = service.join_pod(join_data)
+        # 관리자는 중복 체크 무시
+        skip_check = is_admin(db, join_data.user_id)
+        member_id = service.join_pod(join_data, skip_check=skip_check)
         return {"pod_member_id": member_id, "message": "Successfully joined the pod"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

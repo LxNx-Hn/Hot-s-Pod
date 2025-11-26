@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { createPod, fetchPods } from "@redux/slices/podSlice.js";
 import { useMe } from "../../../queries/useMe.js";
 import { usePods } from "../../../queries/usePods.js";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 export default function Main() {
@@ -13,13 +14,14 @@ export default function Main() {
     const [selectedCategory,setSelectedCategory] = useState(0); 
     const [isPodModalOpen, setIsPodModalOpen] = useState(false);
     const { data, isLoading, isError } = useMe();
-    const [limit,setLimit] = useState(30);
+    const [limit,setLimit] = useState(100);
     const [offset,setOffset] = useState(0);
     const { data:podsData, isLoading:isPodsLoading, isError:isPodsError } = usePods({limit,offset});
     const [orderBy, setOrderBy] = useState("최신순");
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const queryClient = useQueryClient();
 
     const handleOpenPodModal = () => {
         setIsPodModalOpen(true);
@@ -36,7 +38,9 @@ export default function Main() {
             setIsGenerating(true);
             await dispatch(createPod(podData)).unwrap();
             alert('POD이 생성되었습니다!');
-            dispatch(fetchPods());
+            // React Query 캐시 무효화
+            queryClient.invalidateQueries({ queryKey: ["pods"] });
+            handleClosePodModal();
         } catch (error) {
             alert('POD 생성에 실패했습니다: ' + error.message);
         } finally {

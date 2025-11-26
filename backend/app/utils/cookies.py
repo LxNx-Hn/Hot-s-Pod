@@ -2,9 +2,9 @@
 from fastapi import Response
 from typing import Optional
 
-# 로컬 개발용 기본값 (배포 시: SAMESITE="None", SECURE=True 권장)
-SAMESITE_DEFAULT = "None"   # 프론트/백 오리진이 다르면 "None"
-SECURE_DEFAULT   = False    # http 로컬 테스트만 False, https 배포는 True
+# 백/프론트 서버가 다른 경우 (크로스 오리진)
+SAMESITE_DEFAULT = "None"   # 다른 도메인 간 쿠키 전송 허용
+SECURE_DEFAULT   = True     # None 사용 시 HTTPS 필수
 
 def set_access_cookie(
     response: Response,
@@ -57,5 +57,6 @@ def set_refresh_cookie(
     response.set_cookie(**cookie_params)
 
 def clear_auth_cookies(response: Response, domain: Optional[str] = None):
-    response.delete_cookie("access_token", path="/", domain=domain)
-    response.delete_cookie("refresh_token", path="/", domain=domain)
+    # domain을 절대 사용하지 않음 (보안 강화)
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")

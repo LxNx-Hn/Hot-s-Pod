@@ -2,7 +2,6 @@ import SizeComponent from "../../common/icon/SizeComponent";
 import LocalFireDepartmentOutlinedIcon from '@mui/icons-material/LocalFireDepartmentOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -34,7 +33,6 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                 </div>
                 <div className="flex flex-col justify-center px-2">
                     <div className='flex flex-row gap-4'>
-                        <SizeComponent Component={NotificationsNoneIcon} fontSize={"2rem"}/>
                         <SizeComponent Component={PermIdentityOutlinedIcon} fontSize={"2rem"} className={"cursor-pointer"} onClick={()=>{navigate("/myPage");}}/>
                     </div>
                 </div>
@@ -44,26 +42,6 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
             <div className="flex flex-col p-8 gap-8">
                 
                 <div className='flex flex-row w-full justify-center text-2xl font-bold min-w-80'>함께할 즐거움을 찾아보세요!</div>
-                <div className='flex flex-row w-full justify-center'>
-                    <div className='flex flex-row w-full max-w-fit justify-center bg-[#FFFFFF] p-2 rounded-lg min-w-96'>
-                        <div className='flex flex-col justify-center p-2'>
-                            <SearchOutlinedIcon/>
-                        </div>
-                        <div className='relative w-full flex items-center'>
-                            <input
-                                type='text'
-                                placeholder={isGenerating ? '생성 중... 잠시만 기다려주세요.' : '관심사, 지역, 키워드로 검색해보세요.'}
-                                className={`min-w-80 p-2 w-full ${isGenerating ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                                disabled={isGenerating}
-                            />
-                            {isGenerating && (
-                                <div className='absolute right-2'>
-                                    <CircularProgress size={18} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
                 <div className="flex flex-row justify-end w-full">
                     <div className='w-32'>
                         <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
@@ -111,7 +89,7 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                                     </div>
                                     <div className='flex flex-row gap-1'>
                                         <SizeComponent Component={PlaceOutlinedIcon} fontSize={16}/>
-                                        <div className="text-xs text-gray-400">{pod.place}</div>
+                                        <div className="text-xs text-gray-400">{pod.place_detail}{pod.place && ` (${pod.place})`}</div>
                                     </div>
                                 </div>
                             </div>

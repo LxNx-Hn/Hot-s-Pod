@@ -12,6 +12,7 @@ export function useCreatePod() {
     mutationFn: createPod,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pods"] });
+      qc.invalidateQueries({ queryKey: ["userspods"] }); // MyPod 새로고침
     },
   });
 }

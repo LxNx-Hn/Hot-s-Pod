@@ -17,3 +17,6 @@ class UserService:
         if user_data:
             return UserResponse(**user_data)
         return None
+    
+    def update_user(self, user_id: int, update_data: dict) -> bool:
+        return self.command_repo.update_user(user_id, update_data)

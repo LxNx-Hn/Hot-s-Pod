@@ -2,7 +2,6 @@ import SizeComponent from "../../common/icon/SizeComponent";
 import LocalFireDepartmentOutlinedIcon from '@mui/icons-material/LocalFireDepartmentOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -28,9 +27,6 @@ export default function SearchPresenter({ query, setQuery, onSearch,
     RAGMessages,
     setRAGMessages, orderBy , handleChange, pods, active, setActive }) {
     const navigate = useNavigate();
-    useEffect(()=>{
-        console.log(RAGMessages);
-    },[RAGMessages])
     const PodCard = ({podData}) => {
         if(podData.llm_answer === "me")
             return (
@@ -86,13 +82,13 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                                                     </svg>
                                                 </div>
                                             </div>
-                                            {pod.place && (
+                                            {(pod.place_detail || pod.place) && (
                                                 <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     </svg>
-                                                    {pod.place}
+                                                    {pod.place_detail}{pod.place && ` (${pod.place})`}
                                                 </div>
                                             )}
                                         </div>
@@ -114,7 +110,6 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                 </div>
                 <div className="flex flex-col justify-center px-2">
                     <div className='flex flex-row gap-4'>
-                        <SizeComponent Component={NotificationsNoneIcon} fontSize={"2rem"}/>
                         <SizeComponent Component={PermIdentityOutlinedIcon} fontSize={"2rem"} className={"cursor-pointer"} onClick={()=>{navigate("/myPage");}}/>
                     </div>
                 </div>
@@ -158,8 +153,8 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                         {pods&&pods.map((pod, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={(e) => {console.log(pods[idx].pod_id);
-                                    navigate(`/podDetail/${pods[idx].pod_id}`)
+                                onClick={(e) => {
+                                    navigate(`/podDetail/${pods[idx].pod_id}`);
                                 }}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >
@@ -176,7 +171,7 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                                     </div>
                                     <div className='flex flex-row gap-1'>
                                         <SizeComponent Component={PlaceOutlinedIcon} fontSize={16}/>
-                                        <div className="text-xs text-gray-400">{pod.place}</div>
+                                        <div className="text-xs text-gray-400">{pod.place_detail}{pod.place && ` (${pod.place})`}</div>
                                     </div>
                                 </div>
                             </div>

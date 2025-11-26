@@ -67,3 +67,7 @@ chroma_db_data/
 .DS_Store
 .vscode/
 .idea/
+api_get_test_results.json
+test_*.py
+로그파일들*.txt
+*.txt~

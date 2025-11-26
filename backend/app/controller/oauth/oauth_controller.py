@@ -13,8 +13,8 @@ from datetime import timedelta
 from app.utils.cookies import set_access_cookie, set_refresh_cookie, clear_auth_cookies
 
 
-SAMESITE = "None"   # 프론트/백 다른 도메인이므로 "None" 필수
-SECURE   = True     # HTTPS 환경이므로 True
+SAMESITE = "None"   # 백/프론트 서버가 다르므로 None 필수
+SECURE   = True     # None 사용 시 Secure 필수 (HTTPS)
 router = APIRouter(prefix='/oauth', tags=['OAuth'])
 # 어우씨 여기 하나도 모르겠다 ㅋㅋㅋ
 @router.get("/kakao/login")
@@ -24,6 +24,7 @@ async def kakao_login():
         f"?client_id={settings.KAKAO_REST_API_KEY}"
         f"&redirect_uri={settings.KAKAO_REDIRECT_URI}"
         f"&response_type=code"
+        f"&scope=account_email"  # 이메일 동의 추가
     )
     return RedirectResponse(url=kakao_auth_url)
 @router.get("/kakao/callback")
@@ -92,11 +93,12 @@ async def kakao_callback(
         print("[oauth] after service, user_info =", user_info)
         user_id = user_info["user_id"]
         username = user_info["username"]
+        is_admin = user_info.get("is_admin", False)
 
-        # 4) JWT 생성
+        # 4) JWT 생성 (is_admin 포함)
         print("[oauth] before create_access_token")
         access_token = create_access_token(
-            data={"user_id": user_id, "username": username},
+            data={"user_id": user_id, "username": username, "is_admin": is_admin},
             expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
         )
         refresh_token = create_access_token(
@@ -107,11 +109,10 @@ async def kakao_callback(
         # 5) 쿠키 + 리다이렉트
         redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?ok=1"
         resp = RedirectResponse(url=redirect_url, status_code=302)
-        # COOKIE_DOMAIN이 설정되어 있으면 크로스 도메인 쿠키 설정
-        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
-        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
-        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
-        print(f"[oauth] set cookies (domain={cookie_domain}) & redirect -> {redirect_url}")
+        # domain을 절대 설정하지 않음 (각 브라우저별로 독립적인 쿠키)
+        set_access_cookie(resp, access_token, samesite=SAMESITE, secure=SECURE)
+        set_refresh_cookie(resp, refresh_token, samesite=SAMESITE, secure=SECURE)
+        print(f"[oauth] set cookies (NO DOMAIN) & redirect -> {redirect_url}")
         return resp
 
     except requests.exceptions.RequestException as e:
@@ -124,7 +125,7 @@ async def kakao_callback(
         raise HTTPException(status_code=500, detail="서버 오류가 발생했습니다.")
 
 @router.post("/refresh")
-async def refresh_token(request: Request, response: Response):
+async def refresh_token(request: Request, response: Response, db: Connection = Depends(get_db_connection)):
     cookie = request.cookies.get("refresh_token")
     if not cookie:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
@@ -137,20 +138,28 @@ async def refresh_token(request: Request, response: Response):
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid payload")
 
+    # DB에서 최신 is_admin 상태 조회
+    from app.utils.permissions import is_admin as check_is_admin
+    is_admin_status = check_is_admin(db, user_id)
+    
+    # username도 함께 조회
+    with db.cursor() as cursor:
+        cursor.execute("SELECT username FROM user WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        username = result['username'] if result else None
+
     new_access = create_access_token(
-        data={"user_id": user_id},
+        data={"user_id": user_id, "username": username, "is_admin": is_admin_status},
         expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
-    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE, domain=cookie_domain)
+    set_access_cookie(response, new_access, samesite=SAMESITE, secure=SECURE)
     return {"ok": True}
 
 
 @router.post("/logout")
 async def logout(request: Request, response: Response):
     try:
-        cookie_domain = settings.COOKIE_DOMAIN if hasattr(settings, 'COOKIE_DOMAIN') else None
-        clear_auth_cookies(response, domain=cookie_domain)
+        clear_auth_cookies(response)
         return {"message": "로그아웃 성공"}
     except Exception as e:
         print(f"[oauth] logout error: {e}")

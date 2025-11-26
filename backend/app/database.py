@@ -21,7 +21,7 @@ class DatabaseConnectionPool:
                     maxshared=3,
                     blocking=True,
                     maxusage=None,
-                    setsession=[],
+                    setsession=['SET time_zone = "+09:00"'],  # KST 시간대 설정
                     ping=1,
                     host=settings.DATABASE_HOST,
                     port=settings.DATABASE_PORT,

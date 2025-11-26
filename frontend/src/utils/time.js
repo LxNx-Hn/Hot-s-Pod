@@ -1,6 +1,6 @@
 // Utilities for parsing/displaying dates in Korea Standard Time (KST)
 export function toSeoulDate(input) {
-  if (!input && input !== 0) return new Date(input);
+  if (!input && input !== 0) return new Date();
   // if already a Date
   if (input instanceof Date) return input;
   const str = String(input);

@@ -16,5 +16,11 @@ class UserQueryRepository:
             sql = "SELECT profile_picture FROM kakaoapi WHERE user_id = %s"
             cursor.execute(sql, (user_id,))
             kakao_data = cursor.fetchone()
-            res["profile_picture"] = kakao_data.get("profile_picture", "") if kakao_data else ""
+            
+            # profile_picture_enabled가 False면 placeholder 사용
+            if res.get("profile_picture_enabled", True):
+                res["profile_picture"] = kakao_data.get("profile_picture", "") if kakao_data else ""
+            else:
+                res["profile_picture"] = "https://via.placeholder.com/96"
+            
             return res

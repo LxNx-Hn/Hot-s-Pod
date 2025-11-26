@@ -1,4 +1,3 @@
-// frontend/src/pages/chat/index.jsx
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,8 +5,8 @@ import { fetchChatMessages, sendChatMessage } from "@redux/slices/chatSlice";
 import { useMe } from "../../src/queries/useMe"; // 로그인 사용자 정보 (쿠키 기반)
 import { useMessage } from "../../src/queries/useMessage";
 import { usePodDetail } from "../../src/queries/usePods";
-import { joinPod } from "../../src/queries/usePodJoin";
-import { leavePod } from "../../src/queries/usePodLeave";
+import { useJoinPod } from "../../src/queries/usePodJoin";
+import { useLeavePod } from "../../src/queries/usePodLeave";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
@@ -15,6 +14,7 @@ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SizeComponent from "../../src/components/common/icon/SizeComponent";
 import { createComment } from "@redux/slices/commentSlice.js";
+import AddPodContainer from "../../src/components/common/modals/AddPod/AddPodContainer.jsx";
 
 const getIndentClass = (level) => {
   if (level === 0) return "";
@@ -26,50 +26,112 @@ import { toSeoulDate, formatSeoul } from "../../src/utils/time";
 
 const time_delta_string = (string_time) => {
   const createdAt = toSeoulDate(string_time);
-  const now = new Date();
+  const now = new Date(); // 브라우저 로컬 시간 (KST)
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
-    const year_second = 3600*24*30*365;
     const month_second = 3600*24*30;
     const day_second = 3600*24;
     const hour_second = 3600;
     const minute_second = 60;
-    if(timeDelta > year_second)
-      return `${Math.floor(timeDelta/year_second)}년 전`;
-    if(timeDelta > month_second)
-      return `${Math.floor(timeDelta/month_second)}개월 전`;
-    if(timeDelta > day_second)
+    
+    if(timeDelta >= month_second)
+      return "오래 전";
+    if(timeDelta >= day_second)
       return `${Math.floor(timeDelta/day_second)}일 전`;
-    if(timeDelta > hour_second)
+    if(timeDelta >= hour_second)
       return `${Math.floor(timeDelta/hour_second)}시간 전`;
-    if(timeDelta > minute_second)
+    if(timeDelta >= minute_second)
       return `${Math.floor(timeDelta/minute_second)}분 전`;
-    else
-      return `${Math.floor(timeDelta)}초 전`; 
+    return "방금 전"; 
   }
-const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = null }) => {
+const CommentItem = ({ 
+  comment, 
+  setSelectedCommentId, 
+  level = 0, 
+  selectedId = null, 
+  onDeleteComment, 
+  onEditComment, 
+  editingCommentId,
+  editingCommentText,
+  onSaveEdit,
+  onCancelEdit,
+  onEditTextChange,
+  currentUserId, 
+  isAdmin 
+}) => {
   const indentClass = getIndentClass(level);
+  const isMyComment = comment.user_id === currentUserId;
+  const isDeleted = comment.user_id === null || comment.content === "[사용자가 댓글을 삭제했습니다]" || comment.content === "[삭제된 댓글입니다]";
+  const isWithdrawnUser = comment.username === "탈퇴한 회원";
+  const canDelete = (isMyComment || isAdmin) && !isDeleted; // 본인 또는 관리자
+  const canEdit = isMyComment && !isDeleted && !isWithdrawnUser; // 본인만
+  const isEditing = editingCommentId === comment.comment_id;
+  const isEdited = !isDeleted && comment.updated_at && comment.created_at !== comment.updated_at;
 
   return (
     <div
       className={`flex flex-col gap-2 w-full ${indentClass}`}
     >
       
-      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"}`} onClick={()=>{setSelectedCommentId(comment.comment_id)}}>
+      <div className={`flex flex-col p-2 bg-white rounded-md w-full gap-2 border-2 ${selectedId==comment.comment_id?"border-blue-500":"border-transparent"} ${isDeleted || isWithdrawnUser ? 'opacity-60' : ''}`} onClick={()=>{!isDeleted && !isEditing && !isWithdrawnUser && setSelectedCommentId(comment.comment_id)}}>
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-2">
             <img
-              src={comment.profile_picture}
+              src={(isDeleted || isWithdrawnUser) ? "https://via.placeholder.com/32" : comment.profile_picture}
               className="w-8 h-8 rounded-full"
             />
-            <div className="font-bold flex flex-col justify-center">{comment.username}</div>
+            <div className="font-bold flex flex-col justify-center">{isDeleted ? "(삭제됨)" : (isWithdrawnUser ? "탈퇴한 회원" : comment.username)}</div>
           </div>
-          <div className="text-xs text-[#888888]">
-            {time_delta_string(comment.created_at)}
+          <div className="flex flex-row gap-2 items-center">
+            <div className="text-xs text-[#888888]">
+              {time_delta_string(comment.created_at)}
+              {isEdited && <span className="ml-1 text-[#666666]">(수정됨)</span>}
+            </div>
+            {!isEditing && canEdit && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onEditComment(comment); }}
+                className="text-xs text-blue-500 hover:text-blue-700 px-2 py-1"
+              >
+                수정
+              </button>
+            )}
+            {!isEditing && canDelete && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDeleteComment(comment.comment_id); }}
+                className="text-xs text-red-500 hover:text-red-700 px-2 py-1"
+              >
+                삭제
+              </button>
+            )}
           </div>
         </div>
-        <p className="w-full">{comment.content}</p>
+        {isEditing ? (
+          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={editingCommentText}
+              onChange={(e) => onEditTextChange(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              rows="3"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => onSaveEdit(comment.comment_id)}
+                className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+              >
+                저장
+              </button>
+              <button
+                onClick={onCancelEdit}
+                className="px-3 py-1 bg-gray-300 rounded-md hover:bg-gray-400 text-sm"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="w-full">{comment.content}</p>
+        )}
       </div>
       {/* 자식 댓글들 */}
       {comment.children?.length > 0 && (
@@ -81,6 +143,15 @@ const CommentItem = ({ comment, setSelectedCommentId, level = 0, selectedId = nu
               setSelectedCommentId={setSelectedCommentId}
               level={level + 1}
               selectedId={selectedId}
+              onDeleteComment={onDeleteComment}
+              onEditComment={onEditComment}
+              editingCommentId={editingCommentId}
+              editingCommentText={editingCommentText}
+              onSaveEdit={onSaveEdit}
+              onCancelEdit={onCancelEdit}
+              onEditTextChange={onEditTextChange}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -98,11 +169,19 @@ export default function ChatPage() {
   const [ podIdState, setPodIdState] = useState(podId?podId:null)
   const { data: podDetail, isLoading: podDetailLoading, isError: podDetailError, refetch: refetchPodDetail} = usePodDetail(podIdState);
   const { data: messages, isLoading: messageLoading, isError: isMessageError, refetch: refetchMessages } = useMessage(podIdState);
+  
+  // Pod 참가/탈퇴 mutations
+  const joinPodMutation = useJoinPod();
+  const leavePodMutation = useLeavePod();
 
   const [commentText, setCommentText] = useState("");
   const [selectedCommentId, setSelectedCommentId] = useState(null);
   const [isMyPod, setIsMyPod] = useState(false);
   const [isChatOpened, setIsChatOpened] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [isEditPodModalOpen, setIsEditPodModalOpen] = useState(false);
+  
   const handleSelectedCommentId = (comment_id) => {
     if(selectedCommentId==comment_id)
       setSelectedCommentId(null);
@@ -117,6 +196,7 @@ export default function ChatPage() {
   const [isSendingComment, setIsSendingComment] = useState(false);
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
+  const messageInputRef = useRef(null);
 
   // 스크롤 최하단
   const scrollToBottom = () => {
@@ -134,8 +214,6 @@ export default function ChatPage() {
   }
   useEffect(() => {
     scrollToBottom();
-    console.log(messages);
-    console.log(wsMessages);
   }, [messages, wsMessages]);
   useEffect(()=>{
     setIsMyPod(isInMe());
@@ -200,7 +278,7 @@ export default function ChatPage() {
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
-      console.log("WebSocket Connected:", wsUrl);
+      // WebSocket 연결 성공
     };
 
     ws.current.onmessage = (event) => {
@@ -223,7 +301,7 @@ export default function ChatPage() {
     };
 
     ws.current.onclose = () => {
-      console.log("WebSocket Disconnected");
+      // WebSocket 연결 종료
     };
 
     return () => {
@@ -261,6 +339,8 @@ export default function ChatPage() {
       }
       setMessageText("");
       refetchMessages();
+      // 전송 후 자동으로 입력창에 포커스
+      setTimeout(() => messageInputRef.current?.focus(), 0);
     } catch (error) {
       alert("메시지 전송 실패: " + (error?.message || "unknown error"));
     } finally {
@@ -284,7 +364,7 @@ export default function ChatPage() {
       username: me.username,
       profile_picture: me.profile_picture,
       content,
-      created_at: now,
+      created_at: new Date().toISOString(),
       parent_comment_id: parentCommentId,
     };
 
@@ -339,35 +419,157 @@ export default function ChatPage() {
     const newDate = toSeoulDate(date);
     const weekDays = ["일","월","화","수","목","금","토"];
     //요일 .getDay -> 0~6 > 일 ~ 토
-    var result = formatSeoul(newDate, { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    var result = formatSeoul(newDate, { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     return result;
   }
   const joinPodFunc = async() => {
     try{
       if(me)
       {
-        await joinPod({"user_id":me.user_id,"pod_id":podId,"amount":1,"place_start":"","place_end":""});
+        await joinPodMutation.mutateAsync({"user_id":me.user_id,"pod_id":podId,"amount":1,"place_start":"","place_end":""});
         refetchPodDetail();
       }
     }
     catch(e)
     {
-      alert("팟 참여에 실패했습니다.")
+      const errorMsg = e.response?.data?.detail || "팟 참여에 실패했습니다.";
+      alert(errorMsg);
     }
   }
   const leavePodFunc = async() => {
     try{
       if(me) {
-        await leavePod(me.user_id,podId);
+        await leavePodMutation.mutateAsync({"user_id":me.user_id,"pod_id":podId});
         refetchPodDetail();
       }
     }
     catch(e)
     {
-      alert("팟 나가기 실패")
+      const errorMsg = e.response?.data?.detail || "팟 나가기에 실패했습니다.";
+      alert(errorMsg);
     }
   }
   
+  // 댓글 삭제
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('댓글을 삭제하시겠습니까?')) return;
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/comments/${commentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '댓글 삭제에 실패했습니다.');
+      }
+      
+      await refetchPodDetail();
+    } catch (error) {
+      alert(error.message || '댓글 삭제에 실패했습니다.');
+      console.error('댓글 삭제 오류:', error);
+    }
+  };
+
+  // 댓글 수정 시작
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.comment_id);
+    setEditingCommentText(comment.content);
+  };
+
+  // 댓글 수정 취소
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+
+  // 댓글 수정 저장
+  const handleSaveEdit = async (commentId) => {
+    if (!editingCommentText.trim()) {
+      alert('댓글 내용을 입력하세요.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/comments/${commentId}?content=${encodeURIComponent(editingCommentText)}`, {
+        method: 'PUT',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        await refetchPodDetail();
+        setEditingCommentId(null);
+        setEditingCommentText("");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '수정 실패');
+      }
+    } catch (error) {
+      alert(error.message || '댓글 수정에 실패했습니다.');
+    }
+  };
+
+  // Pod 삭제
+  const handleDeletePod = async () => {
+    if (!confirm('정말로 이 POD를 삭제하시겠습니까?')) return;
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pods/${podId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        alert('POD가 삭제되었습니다.');
+        navigate('/');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '삭제 권한이 없습니다.');
+      }
+    } catch (error) {
+      alert('POD 삭제에 실패했습니다: ' + error.message);
+    }
+  };
+
+  // Pod 수정 모달 열기
+  const handleOpenEditPodModal = () => {
+    setIsEditPodModalOpen(true);
+  };
+
+  // Pod 수정 모달 닫기
+  const handleCloseEditPodModal = () => {
+    setIsEditPodModalOpen(false);
+  };
+
+  // Pod 수정 저장
+  const handleUpdatePod = async (podData) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pods/${podId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(podData),
+      });
+
+      if (response.ok) {
+        alert('POD가 수정되었습니다.');
+        await refetchPodDetail();
+        setIsEditPodModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '수정 권한이 없습니다.');
+      }
+    } catch (error) {
+      alert('POD 수정에 실패했습니다: ' + error.message);
+    }
+  };
+
+  // 호스트 또는 관리자
+  const isHost = me && podDetail?.host_user_id === me.user_id;
+  const isHostOrAdmin = isHost || (me?.is_admin || false);
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
   if (meLoading || messageLoading || podDetailLoading) {
@@ -395,11 +597,33 @@ export default function ChatPage() {
         <div></div>
       </div>
       <div className="flex flex-col gap-8 py-8">
-        <div className="text-3xl font-black">{podDetail.title}</div>
+        <div className="flex flex-row justify-between items-center">
+          <div className="text-3xl font-black">{podDetail.title}</div>
+          {(isHost || isHostOrAdmin) && (
+            <div className="flex flex-row gap-2">
+              {isHost && (
+                <button
+                  onClick={handleOpenEditPodModal}
+                  className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  수정
+                </button>
+              )}
+              {isHostOrAdmin && (
+                <button
+                  onClick={handleDeletePod}
+                  className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  삭제
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2">
             <SizeComponent Component={PlaceOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
-            <div className="flex flex-col justify-center font-semibold">{podDetail.place}</div>
+            <div className="flex flex-col justify-center font-semibold">{podDetail.place_detail}{podDetail.place && ` (${podDetail.place})`}</div>
           </div>
           <div className="flex flex-row gap-2">
             <SizeComponent Component={AccessTimeOutlinedIcon} fontSize={48} className={"bg-[#C9E6F5] text-[#00A2EC] p-1 rounded-lg"}/>
@@ -433,7 +657,21 @@ export default function ChatPage() {
                   <div className="w-full text-center">댓글이 없습니다.</div>
                 ) : (
                   commentTree.map((comment) => (
-                    <CommentItem key={comment.comment_id} comment={comment} setSelectedCommentId={handleSelectedCommentId} selectedId={selectedCommentId} />
+                    <CommentItem 
+                      key={comment.comment_id} 
+                      comment={comment} 
+                      setSelectedCommentId={handleSelectedCommentId} 
+                      selectedId={selectedCommentId}
+                      onDeleteComment={handleDeleteComment}
+                      onEditComment={handleEditComment}
+                      editingCommentId={editingCommentId}
+                      editingCommentText={editingCommentText}
+                      onSaveEdit={handleSaveEdit}
+                      onCancelEdit={handleCancelEdit}
+                      onEditTextChange={setEditingCommentText}
+                      currentUserId={me?.user_id}
+                      isAdmin={me?.is_admin || false}
+                    />
                   ))
                 )}
               
@@ -441,8 +679,8 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-      {/* 채팅 메시지 영역 */}
-      <div className={`fixed left-0 top-0 bg-black bg-opacity-50 w-full h-full ${isChatOpened?"":"hidden"}`}>
+      {/* 채팅 메시지 영역 (참여자만 접근 가능) */}
+      <div className={`fixed left-0 top-0 bg-black bg-opacity-50 w-full h-full ${(isChatOpened && isMyPod)?"":"hidden"}`}>
         
         <div className="flex flex-col justify-between h-full">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -486,12 +724,10 @@ export default function ChatPage() {
           <div className="p-4 shadow-lg">
             <div className="flex flex-row gap-2">
               <input
+                ref={messageInputRef}
                 type="text"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                onSubmit={(e) => {
-                  console.log("전송 ",e.target.value);
-                }}
                 onKeyDown={handleKeyDown}
                 placeholder={isSendingMessage?"전송 중...":"메시지를 입력하세요..."}
                 disabled={isSendingMessage}
@@ -518,7 +754,6 @@ export default function ChatPage() {
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            onSubmit={(e) => {console.log("전송 ",e.target.value);}}
             onKeyDown={handleKeyDownComment}
                 placeholder={isSendingComment?"댓글 전송 중...":"댓글을 입력하세요..."}
                 disabled={isSendingComment}
@@ -531,22 +766,41 @@ export default function ChatPage() {
       </div>
       <div className="w-full flex flex-col justify-center py-4">
         <div className="flex flex-row w-full gap-2">
-          {isMyPod?<div
-              className="flex flex-row w-3/4 justify-center bg-red-500 font-bold text-white py-2 rounded-xl cursor-pointer"
-              onClick={leavePodFunc}
-          >
-            나가기
-          </div>:<div
-              className="flex flex-row w-3/4 justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer"
+          {isMyPod ? (
+            <>
+              <div
+                className="flex flex-row w-3/4 justify-center bg-red-500 font-bold text-white py-2 rounded-xl cursor-pointer"
+                onClick={leavePodFunc}
+              >
+                나가기
+              </div>
+              <div 
+                className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" 
+                onClick={() => {setIsChatOpened(true)}}
+              >
+                채팅 열기
+              </div>
+            </>
+          ) : (
+            <div
+              className="flex flex-row w-full justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer"
               onClick={joinPodFunc}
-          >
-            참여하기
-          </div>}
-          <div className="w-1/4 flex flex-col justify-center bg-blue-500 font-bold text-white py-2 rounded-xl cursor-pointer text-center" onClick={()=>{setIsChatOpened(true)}}>채팅 열기</div>
+            >
+              참여하기
+            </div>
+          )}
         </div>
         
       </div>
 
+      {/* Pod 수정 모달 */}
+      <AddPodContainer 
+        isOpen={isEditPodModalOpen}
+        onClose={handleCloseEditPodModal}
+        onSave={handleUpdatePod}
+        initialData={podDetail}
+        isEditMode={true}
+      />
       
     </div>
   );

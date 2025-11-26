@@ -1,13 +1,14 @@
 # app/controller/user/user_controller.py
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pymysql.connections import Connection
 from app.database import get_db_connection
 from app.repository.user.user_command_repository import UserCommandRepository
 from app.repository.user.user_query_repository import UserQueryRepository
 from app.service.user.user_service import UserService
-from app.schemas.user import UserCreateRequest, UserResponse
+from app.schemas.user import UserCreateRequest, UserUpdateRequest, UserResponse
 from app.utils.auth import get_current_user_id
 from app.utils.auth import get_current_user_id_from_cookie
+from app.utils.permissions import get_user_from_token
 from typing import List
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -52,3 +53,53 @@ async def get_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@router.put("/me", response_model=dict)
+async def update_my_profile(
+    request: Request,
+    update_data: UserUpdateRequest,
+    service: UserService = Depends(get_user_service)
+):
+    """현재 로그인한 사용자 프로필 수정"""
+    user_payload = get_user_from_token(request)
+    user_id = user_payload.get('user_id')
+    
+    # 수정할 데이터만 dict로 변환
+    update_dict = update_data.model_dump(exclude_unset=True)
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="수정할 내용이 없습니다")
+    
+    success = service.update_user(user_id, update_dict)
+    if not success:
+        raise HTTPException(status_code=500, detail="프로필 수정에 실패했습니다")
+    
+    return {"message": "프로필이 성공적으로 수정되었습니다"}
+
+@router.delete("/me", response_model=dict)
+async def delete_my_account(
+    request: Request,
+    db: Connection = Depends(get_db_connection),
+    service: UserService = Depends(get_user_service)
+):
+    """현재 로그인한 사용자 탈퇴 (본인만 가능)"""
+    from fastapi.responses import JSONResponse
+    
+    user_payload = get_user_from_token(request)
+    user_id = user_payload.get('user_id')
+    
+    # 사용자 삭제
+    with db.cursor() as cursor:
+        # 1. kakaoapi 레코드 삭제 (CASCADE로 자동 삭제됨)
+        # 2. user 레코드 삭제
+        sql = "DELETE FROM user WHERE user_id = %s"
+        cursor.execute(sql, (user_id,))
+        db.commit()
+        
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    
+    # 쿠키 삭제하여 자동 재가입 방지
+    response = JSONResponse(content={"message": "회원 탈퇴가 완료되었습니다"})
+    response.delete_cookie(key="access_token", path="/", domain=None)
+    response.delete_cookie(key="refresh_token", path="/", domain=None)
+    return response

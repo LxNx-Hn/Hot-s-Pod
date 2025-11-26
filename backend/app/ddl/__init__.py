@@ -1,1 +1,1 @@
-"""Database DDL / migrations helpers."""
+"""Database DDL helpers."""

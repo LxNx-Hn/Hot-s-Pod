@@ -10,10 +10,15 @@ class PodQueryRepository:
     def find_pod_by_id(self, pod_id: int) -> Optional[Dict[str, Any]]:
         with self.db.cursor() as cursor:
             sql = """
-                SELECT p.*, u.username AS host_username
+                SELECT 
+                    p.*, 
+                    COALESCE(u.username, '탈퇴한 회원') AS host_username,
+                    COUNT(pm.user_id) AS current_member
                 FROM pod p
-                JOIN user u ON p.host_user_id = u.user_id
+                LEFT JOIN user u ON p.host_user_id = u.user_id
+                LEFT JOIN pod_member pm ON p.pod_id = pm.pod_id
                 WHERE p.pod_id = %s
+                GROUP BY p.pod_id
             """
             cursor.execute(sql, (pod_id,))
             return cursor.fetchone()
@@ -23,13 +28,13 @@ class PodQueryRepository:
             sql = """
             SELECT
                 p.*,
-                u.username AS host_username,
+                COALESCE(u.username, '탈퇴한 회원') AS host_username,
                 comAgg.comments,
                 catAgg.categories,
                 pmAgg.members,
                 COUNT(pm.user_id) AS current_member
             FROM pod p
-            JOIN user u ON p.host_user_id = u.user_id
+            LEFT JOIN user u ON p.host_user_id = u.user_id
             LEFT JOIN pod_member pm ON p.pod_id = pm.pod_id
 
             LEFT JOIN (
@@ -40,14 +45,23 @@ class PodQueryRepository:
                             'comment_id',         c.comment_id,
                             'parent_comment_id',  c.parent_comment_id,
                             'user_id',            c.user_id,
-                            'username',           cu.username,
-                            'profile_picture',    ka.profile_picture,
+                            'username',           CASE
+                                                      WHEN c.user_id IS NULL THEN NULL
+                                                      ELSE COALESCE(cu.username, '탈퇴한 회원')
+                                                  END,
+                            'profile_picture',    CASE
+                                                      WHEN c.user_id IS NULL THEN NULL
+                                                      WHEN cu.profile_picture_enabled IS NULL THEN 'https://via.placeholder.com/32'
+                                                      WHEN cu.profile_picture_enabled = 1 THEN COALESCE(ka.profile_picture, 'https://via.placeholder.com/32')
+                                                      ELSE 'https://via.placeholder.com/32'
+                                                  END,
                             'content',            c.content,
-                            'created_at',         c.created_at
+                            'created_at',         c.created_at,
+                            'updated_at',         c.updated_at
                         )
                     ) AS comments
                 FROM comment c
-                JOIN user cu
+                LEFT JOIN user cu
                     ON cu.user_id = c.user_id
                 LEFT JOIN kakaoapi ka
                     ON ka.user_id = c.user_id
@@ -76,14 +90,18 @@ class PodQueryRepository:
                         JSON_OBJECT(
                             'pod_member_id',   pm2.pod_member_id,
                             'user_id',         pm2.user_id,
-                            'username',        u2.username,
-                            'profile_picture', ka2.profile_picture,
+                            'username',        COALESCE(u2.username, '탈퇴한 회원'),
+                            'profile_picture', CASE
+                                                   WHEN u2.profile_picture_enabled IS NULL THEN 'https://via.placeholder.com/32'
+                                                   WHEN u2.profile_picture_enabled = 1 THEN COALESCE(ka2.profile_picture, 'https://via.placeholder.com/32')
+                                                   ELSE 'https://via.placeholder.com/32'
+                                               END,
                             'amount',          pm2.amount,
                             'joined_at',       pm2.joined_at
                         )
                     ) AS members
                 FROM pod_member pm2
-                JOIN user u2
+                LEFT JOIN user u2
                     ON u2.user_id = pm2.user_id
                 LEFT JOIN kakaoapi ka2
                     ON ka2.user_id = pm2.user_id
@@ -112,11 +130,11 @@ class PodQueryRepository:
             sql = """
             SELECT
                 p.*,
-                u.username AS host_username,
+                COALESCE(u.username, '탈퇴한 회원') AS host_username,
                 COALESCE(pmAgg.current_member, 0) AS current_member,
                 clAgg.category_ids
             FROM pod p
-            JOIN user u ON p.host_user_id = u.user_id
+            LEFT JOIN user u ON p.host_user_id = u.user_id
             LEFT JOIN (
                 SELECT pod_id, COUNT(*) AS current_member
                 FROM pod_member
@@ -136,11 +154,13 @@ class PodQueryRepository:
                 i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []
             return response
     def find_pods_by_query(self, query, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
+        search_pattern = f'%{query}%'
+        
         with self.db.cursor() as cursor:
             sql = """
             SELECT 
                 p.*,
-                u.username AS host_username,
+                COALESCE(u.username, '탈퇴한 회원') AS host_username,
                 (
                     SELECT COUNT(DISTINCT pm.user_id)
                     FROM pod_member pm
@@ -161,26 +181,27 @@ class PodQueryRepository:
                 ) AS category_ids
 
             FROM pod p
-            JOIN user u 
+            LEFT JOIN user u 
                 ON p.host_user_id = u.user_id
 
             WHERE
-                p.title   LIKE %s
-            OR p.content LIKE %s
-            OR p.place   LIKE %s
-            OR EXISTS (
+                p.title LIKE %s
+                OR p.content LIKE %s
+                OR p.place LIKE %s
+                OR p.place_detail LIKE %s
+                OR EXISTS (
                     SELECT 1
                     FROM categorylink cl3
                     JOIN category c3 
                         ON c3.category_id = cl3.category_id
                     WHERE cl3.pod_id = p.pod_id
-                    AND c3.category_name LIKE %s
-            )
+                      AND c3.category_name LIKE %s
+                )
 
             ORDER BY p.event_time DESC
             LIMIT %s OFFSET %s;
             """
-            cursor.execute(sql,(f'%{query}%',f'%{query}%',f'%{query}%',f'%{query}%',limit,offset))
+            cursor.execute(sql, (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, limit, offset))
             response = cursor.fetchall()
             for i in response:
                 i['category_ids'] = json.loads(i['category_ids']) if i['category_ids'] else []

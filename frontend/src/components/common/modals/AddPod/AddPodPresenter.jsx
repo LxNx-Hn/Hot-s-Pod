@@ -22,6 +22,7 @@ export default function AddPodPresenter({
                                                  handleTimeChange,
                                                  handlePlaceChange,
                                                  handleAddressChange,
+                                                 handlePlaceDetailChange,
                                                  handleSubmit,
                                                  isDatePickerOpen,
                                                  setIsDatePickerOpen,
@@ -165,6 +166,8 @@ export default function AddPodPresenter({
                                     <TimePicker
                                         value={form.openTime}
                                         onChange={handleTimeChange}
+                                        format="HH:mm"
+                                        minuteStep={10}
                                         placeholder="시간 선택"
                                         status={errors.openTime||errors.openDateTime ? "error" : ""}
                                         className="h-[45px] w-full"
@@ -180,14 +183,14 @@ export default function AddPodPresenter({
                     </div>
                     <div key={9} className="flex flex-col space-y-1">
                         <div className="flex flex-col items-center space-x-2 w-full">
-                            <div className="text-black text-[16px] font-medium w-full">장소</div>
+                            <div className="text-black text-[16px] font-medium w-full">상세주소 (선택사항)</div>
                             <Input
                                 name={"place"}
                                 value={form.selectedPlace?.address || ''}
                                 onChange={handleAddressChange}
-                                placeholder={"장소를 직접 입력해주세요 (예: 석장동 카페거리)"}
+                                placeholder={"예: 석장동 카페거리, 석장동 102-3"}
                                 status={errors.place ? "error" : ""}
-                                className={`${errors.selectedPlace?"border-1 border-[#EF4444] h-[45px] text-[16px] flex-1":"h-[45px] text-[16px] flex-1"}`}
+                                className="h-[45px] text-[16px] flex-1"
                                 suffix={
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs text-gray-400">지도</span>
@@ -196,7 +199,21 @@ export default function AddPodPresenter({
                                 }
                             />
                         </div>
-                        {errors.selectedPlace && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.selectedPlace}</p>}
+                        {errors.place && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.place}</p>}
+                    </div>
+                    <div key={10} className="flex flex-col space-y-1">
+                        <div className="flex flex-col items-center space-x-2 w-full">
+                            <div className="text-black text-[16px] font-medium w-full">건물명/장소명 (필수)</div>
+                            <Input
+                                name={"placeDetail"}
+                                value={form.placeDetail || ''}
+                                onChange={handlePlaceDetailChange}
+                                placeholder={"예: 스타벅스 석장점, CGV 광명철산점"}
+                                status={errors.placeDetail ? "error" : ""}
+                                className="h-[45px] text-[16px] flex-1"
+                            />
+                        </div>
+                        {errors.placeDetail && <p className="text-red-500 text-sm mt-1 w-full text-center">{errors.placeDetail}</p>}
                     </div>
 
                 </div>
