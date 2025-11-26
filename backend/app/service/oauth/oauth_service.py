@@ -58,9 +58,10 @@ class OAuthService:
             if not existing_user.get('username') or existing_user['username'].startswith('사용자'):
                 self.user_command.update_username(user_id, user_name)
             
-            # 관리자 권한 업데이트 (DB에도 저장)
-            if is_admin:
-                self._update_admin_status(user_id, True)
+            # 관리자 권한 동기화 (승격/강등 모두 처리)
+            current_admin_status = existing_user.get('is_admin', False)
+            if current_admin_status != is_admin:
+                self._update_admin_status(user_id, is_admin)
         else:
             user_id = self.user_command.create_user(username=user_name)
             is_new_user = True
@@ -89,8 +90,12 @@ class OAuthService:
     
     def _update_admin_status(self, user_id: int, is_admin: bool) -> None:
         """관리자 상태 DB 업데이트"""
-        with self.db.cursor() as cursor:
-            sql = "UPDATE user SET is_admin = %s WHERE user_id = %s"
-            cursor.execute(sql, (is_admin, user_id))
-            self.db.commit()
-            print(f"[SECURITY] Updated admin status - user_id: {user_id}, is_admin: {is_admin}")
+        try:
+            with self.db.cursor() as cursor:
+                sql = "UPDATE user SET is_admin = %s WHERE user_id = %s"
+                cursor.execute(sql, (is_admin, user_id))
+                self.db.commit()
+                print(f"[SECURITY] Updated admin status - user_id: {user_id}, is_admin: {is_admin}")
+        except Exception as e:
+            print(f"[WARNING] Failed to update admin status - is_admin column may not exist: {e}")
+            # DB 스키마가 구버전이어도 로그인은 계속 진행
