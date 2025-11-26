@@ -63,14 +63,16 @@ export default function Main() {
         setOrderBy(event.target.value);
     }
 
-    const [pods,setPods] = useState(isPodsLoading?[]:podsData);
+    const [pods,setPods] = useState([]);
     useEffect(() => {
         if (data)
             console.log("[Main.container.jsx] me:", data);
     }, [data]);
     useEffect(()=>{
         console.log("[Main.container.jsx] podsData:",podsData);
-        setPods(podsData);
+        if (podsData && Array.isArray(podsData)) {
+            setPods(podsData);
+        }
     },[podsData]);
     const sortedPods = useMemo(() => {
         if (!podsData) return [];

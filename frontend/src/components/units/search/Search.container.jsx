@@ -33,7 +33,17 @@ export default function SearchContainer() {
         query: currentQuery,
       });
       console.log('[RAG] Response:', response);
-      setRAGMessages((prev) => [...prev, response]);
+      
+      // 응답 데이터 검증
+      if (response && typeof response === 'object') {
+        setRAGMessages((prev) => [...prev, {
+          llm_answer: response.llm_answer || '응답을 받았습니다.',
+          retrieved_pods: response.retrieved_pods || [],
+          total_found: response.total_found || 0
+        }]);
+      } else {
+        throw new Error('잘못된 응답 형식');
+      }
     }catch(e){
       console.error('[RAG] Error:', e);
       const errorMsg = e.response?.data?.detail || 'RAG 요청 중 오류가 발생했습니다.';

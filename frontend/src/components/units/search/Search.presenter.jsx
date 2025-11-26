@@ -55,8 +55,8 @@ export default function SearchPresenter({ query, setQuery, onSearch,
             <div className="flex flex-row justify-start bg-white rounded-xl p-4 w-fit max-w-48">
                 <div className="flex flex-col gap-2">
                 당신이 찾은 팟은
-                {podData.retrieved_pods.map((pod)=>{
-                    return (<div className="cursor-pointer bg-red-400 hover:bg-red-500 rounded-lg" onClick={()=>{navigate(`/podDetail/${pod.pod_id}`)}}>{pod.title}</div>)
+                {podData.retrieved_pods && Array.isArray(podData.retrieved_pods) && podData.retrieved_pods.map((pod, idx)=>{
+                    return (<div key={idx} className="cursor-pointer bg-red-400 hover:bg-red-500 rounded-lg p-2" onClick={()=>{navigate(`/podDetail/${pod.pod_id}`)}}>{pod.title}</div>)
                 })}
                 입니다!
                 </div>
