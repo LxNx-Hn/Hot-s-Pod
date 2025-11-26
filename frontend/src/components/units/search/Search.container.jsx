@@ -19,18 +19,29 @@ export default function SearchContainer() {
   const onSendRAG = async() => {
     if(RAGquery==="")
       return;
+    
+    const currentQuery = RAGquery;
+    setRAGquery(""); // 입력창 즉시 비우기
+    
     // Use functional updates to avoid stale-state and duplicate entries
-    setRAGMessages((prev) => [...prev, { llm_answer: 'me', content: RAGquery }]);
+    setRAGMessages((prev) => [...prev, { llm_answer: 'me', content: currentQuery }]);
+    
     try{
       setIsRAGGenerating(true);
       const response = await fetchRAG({
         user_id: data?.user_id,
-        query: RAGquery,
+        query: currentQuery,
       });
+      console.log('[RAG] Response:', response);
       setRAGMessages((prev) => [...prev, response]);
     }catch(e){
-      console.error('RAG error', e);
-      setRAGMessages((prev) => [...prev, { llm_answer: 'error', content: 'RAG 요청 중 오류가 발생했습니다.' }]);
+      console.error('[RAG] Error:', e);
+      const errorMsg = e.response?.data?.detail || 'RAG 요청 중 오류가 발생했습니다.';
+      setRAGMessages((prev) => [...prev, { 
+        llm_answer: errorMsg, 
+        retrieved_pods: [], 
+        total_found: 0 
+      }]);
     }finally{
       setIsRAGGenerating(false);
     }

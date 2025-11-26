@@ -38,7 +38,7 @@ def set_refresh_cookie(
     days: int = 14,
     samesite: str = SAMESITE_DEFAULT,
     secure: bool = SECURE_DEFAULT,
-    path: str = "/oauth/refresh",
+    path: str = "/",  # path를 /로 변경하여 모든 경로에서 접근 가능
     domain: Optional[str] = None,
 ):
     cookie_params = {
@@ -56,6 +56,6 @@ def set_refresh_cookie(
     
     response.set_cookie(**cookie_params)
 
-def clear_auth_cookies(response: Response):
-    response.delete_cookie("access_token", path="/")
-    response.delete_cookie("refresh_token", path="/oauth/refresh")
+def clear_auth_cookies(response: Response, domain: Optional[str] = None):
+    response.delete_cookie("access_token", path="/", domain=domain)
+    response.delete_cookie("refresh_token", path="/", domain=domain)
