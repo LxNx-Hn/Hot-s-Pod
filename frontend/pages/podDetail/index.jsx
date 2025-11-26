@@ -81,7 +81,7 @@ const CommentItem = ({
               src={(isDeleted || isWithdrawnUser) ? "https://via.placeholder.com/32" : comment.profile_picture}
               className="w-8 h-8 rounded-full"
             />
-            <div className="font-bold flex flex-col justify-center">{isDeleted ? "삭제된 사용자" : (isWithdrawnUser ? "탈퇴한 회원" : comment.username)}</div>
+            <div className="font-bold flex flex-col justify-center">{isDeleted ? "(삭제됨)" : (isWithdrawnUser ? "탈퇴한 회원" : comment.username)}</div>
           </div>
           <div className="flex flex-row gap-2 items-center">
             <div className="text-xs text-[#888888]">
