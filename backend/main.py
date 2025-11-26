@@ -17,7 +17,7 @@ from app.controller.comment import comment_controller
 from app.controller.chat import chat_controller  
 from app.controller.pod_member import pod_member_controller
 from app.socket import websocket
-from app.core.config import settings
+
 
 logging.basicConfig(
     level=logging.INFO,
