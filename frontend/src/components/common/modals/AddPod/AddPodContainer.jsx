@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AddPodPresenter from "./AddPodPresenter";
 import { useMe } from "../../../../queries/useMe"; // 로그인 사용자 정보 (쿠키 기반)
+import dayjs from "dayjs";
 
 export default function AddPodContainer({ isOpen, onClose, onSave }) {
     const { data: me, isLoading: meLoading, isError: meError } = useMe();
@@ -54,18 +55,26 @@ export default function AddPodContainer({ isOpen, onClose, onSave }) {
     }
 
     const validateForm = () => {
-        const now = new Date();
         let newErrors = {};
-        const date = new Date(+(form.openDate || 0) + 3240 * 10000)
-        .toISOString()
-        .replace("T", " ")
-        .replace(/\..*/, "")
-        .split(" ")[0];
+        
         if (!form.podTitle.trim()) newErrors.podTitle = "제목을 입력하세요.";
         if (!form.podDescription.trim()) newErrors.podDescription = "설명을 입력하세요.";
         if (!form.openDate) newErrors.openDate = "모임날짜를 선택하세요.";
         if (!form.openTime) newErrors.openTime = "모임시간을 선택하세요.";
-        if (form.openDate&&form.openTime&&(new Date(date+"T"+form.openTime.toDate().toString().split(' ')[4])) - now <= 0) newErrors.openDateTime = "유효하지 않은 날짜 또는 시간입니다.";
+        
+        // Dayjs를 사용한 간단한 시간 검증
+        if (form.openDate && form.openTime) {
+            const eventDateTime = dayjs(`${form.openDate.format('YYYY-MM-DD')} ${form.openTime.format('HH:mm')}`);
+            if (eventDateTime.isBefore(dayjs())) {
+                newErrors.openDateTime = "과거 시간은 선택할 수 없습니다.";
+            }
+        }
+        
+        // 인원 수 검증
+        if (form.minPeople < 0) newErrors.minPeople = "최소 인원은 0 이상이어야 합니다.";
+        if (form.maxPeople < form.minPeople) newErrors.maxPeople = "최대 인원은 최소 인원보다 커야 합니다.";
+        if (form.maxPeople <= 0) newErrors.maxPeople = "최대 인원은 1명 이상이어야 합니다.";
+        
         if (!form.placeDetail || !form.placeDetail.trim()) newErrors.placeDetail = "건물명/장소명을 입력하세요.";
         if (!form.category || form.category==0) newErrors.category = "카테고리를 선택하세요.";
         setErrors(newErrors);

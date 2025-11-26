@@ -52,7 +52,7 @@ class RagService: #친절한 주석 < -RAG서비스
         try:
             results = self.collection.query(
                 query_embeddings=[query_vector],
-                n_results=5
+                n_results=20
             )
         except Exception as e:
             logger.exception(f"Vector DB query failed for query='{query}': {e}")

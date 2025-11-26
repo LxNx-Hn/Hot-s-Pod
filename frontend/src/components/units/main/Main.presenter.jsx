@@ -2,7 +2,6 @@ import SizeComponent from "../../common/icon/SizeComponent";
 import LocalFireDepartmentOutlinedIcon from '@mui/icons-material/LocalFireDepartmentOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -34,7 +33,6 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                 </div>
                 <div className="flex flex-col justify-center px-2">
                     <div className='flex flex-row gap-4'>
-                        <SizeComponent Component={NotificationsNoneIcon} fontSize={"2rem"}/>
                         <SizeComponent Component={PermIdentityOutlinedIcon} fontSize={"2rem"} className={"cursor-pointer"} onClick={()=>{navigate("/myPage");}}/>
                     </div>
                 </div>

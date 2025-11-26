@@ -2,7 +2,6 @@ import SizeComponent from "../../common/icon/SizeComponent";
 import LocalFireDepartmentOutlinedIcon from '@mui/icons-material/LocalFireDepartmentOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -28,9 +27,6 @@ export default function SearchPresenter({ query, setQuery, onSearch,
     RAGMessages,
     setRAGMessages, orderBy , handleChange, pods, active, setActive }) {
     const navigate = useNavigate();
-    useEffect(()=>{
-        console.log(RAGMessages);
-    },[RAGMessages])
     const PodCard = ({podData}) => {
         if(podData.llm_answer === "me")
             return (
@@ -114,7 +110,6 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                 </div>
                 <div className="flex flex-col justify-center px-2">
                     <div className='flex flex-row gap-4'>
-                        <SizeComponent Component={NotificationsNoneIcon} fontSize={"2rem"}/>
                         <SizeComponent Component={PermIdentityOutlinedIcon} fontSize={"2rem"} className={"cursor-pointer"} onClick={()=>{navigate("/myPage");}}/>
                     </div>
                 </div>
@@ -158,8 +153,8 @@ export default function SearchPresenter({ query, setQuery, onSearch,
                         {pods&&pods.map((pod, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={(e) => {console.log(pods[idx].pod_id);
-                                    navigate(`/podDetail/${pods[idx].pod_id}`)
+                                onClick={(e) => {
+                                    navigate(`/podDetail/${pods[idx].pod_id}`);
                                 }}
                                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
                             >

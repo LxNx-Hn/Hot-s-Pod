@@ -32,7 +32,6 @@ export default function SearchContainer() {
         user_id: data?.user_id,
         query: currentQuery,
       });
-      console.log('[RAG] Response:', response);
       
       // 응답 데이터 검증
       if (response && typeof response === 'object') {

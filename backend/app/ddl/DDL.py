@@ -282,7 +282,7 @@ BEGIN
             "$[*]" COLUMNS (`pod_id_str` VARCHAR(20) PATH "$")
         ) AS `jt`
     )
-    AND (`in_place_keyword` IS NULL OR p.`place` COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', `in_place_keyword` COLLATE utf8mb4_unicode_ci, '%') OR p.`place_detail` COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', `in_place_keyword` COLLATE utf8mb4_unicode_ci, '%'))
+    AND (`in_place_keyword` IS NULL OR COALESCE(p.`place`, '') COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', `in_place_keyword` COLLATE utf8mb4_unicode_ci, '%') OR p.`place_detail` COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', `in_place_keyword` COLLATE utf8mb4_unicode_ci, '%'))
     AND (`in_category_id` IS NULL OR EXISTS (
         SELECT 1 FROM `categorylink` cl
         WHERE cl.`pod_id` = p.`pod_id` AND cl.`category_id` = `in_category_id`

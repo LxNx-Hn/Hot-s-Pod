@@ -12,7 +12,6 @@ export default function MyPodsContainer(){
     const handleOrderBy = (e) => {setOrderBy(e.target.value);}
     const navigate = useNavigate();
     const onPodClick = (podId) => { if(podId) navigate(`/podDetail/${podId}`); };
-    useEffect(()=>{console.log(podsData);},[podsData]);
 
     return (<MyPodsPresenter query={query} setQuery={setQuery} orderBy={orderBy} setOrderBy={handleOrderBy} onPodClick={onPodClick} pods={podsData?podsData:[]}/>)
 }

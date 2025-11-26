@@ -1,4 +1,3 @@
-import SettingsIcon from '@mui/icons-material/Settings';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -88,21 +87,14 @@ export default function MyPageUI() {
     }
     return(
         <div className="flex flex-col w-full gap-8">
-            <div className="flex flex-row justify-between border-b-[#E9EBEE] border-b-[2px] p-6">
-                <div></div>
+            <div className="flex flex-row justify-center border-b-[#E9EBEE] border-b-[2px] p-6">
                 <div className='text-xl font-bold'>마이 페이지</div>
-                <SizeComponent Component={SettingsIcon} className={"cursor-pointer"}/>
             </div>
             <div className='flex flex-row w-full justify-center'>
                 <img src={user?.profile_picture} className='w-24 h-24 rounded-full border-purple-600 border-[3px]'/>
             </div>
             <div className='flex flex-row justify-center font-bold text-2xl'>
                 {user?.username}
-            </div>
-            <div className='px-4'>
-                <div className='w-full rounded-full bg-purple-600 py-2 text-center text-[#FFFFFF] font-semibold cursor-pointer'>
-                    프로필 수정
-                </div>
             </div>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={value} onChange={handleChange} 

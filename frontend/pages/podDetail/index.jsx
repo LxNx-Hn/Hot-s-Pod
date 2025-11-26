@@ -134,8 +134,6 @@ export default function ChatPage() {
   }
   useEffect(() => {
     scrollToBottom();
-    console.log(messages);
-    console.log(wsMessages);
   }, [messages, wsMessages]);
   useEffect(()=>{
     setIsMyPod(isInMe());
@@ -200,7 +198,7 @@ export default function ChatPage() {
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
-      console.log("WebSocket Connected:", wsUrl);
+      // WebSocket 연결 성공
     };
 
     ws.current.onmessage = (event) => {
@@ -223,7 +221,7 @@ export default function ChatPage() {
     };
 
     ws.current.onclose = () => {
-      console.log("WebSocket Disconnected");
+      // WebSocket 연결 종료
     };
 
     return () => {
@@ -352,7 +350,8 @@ export default function ChatPage() {
     }
     catch(e)
     {
-      alert("팟 참여에 실패했습니다.")
+      const errorMsg = e.response?.data?.detail || "팟 참여에 실패했습니다.";
+      alert(errorMsg);
     }
   }
   const leavePodFunc = async() => {
@@ -364,7 +363,8 @@ export default function ChatPage() {
     }
     catch(e)
     {
-      alert("팟 나가기 실패")
+      const errorMsg = e.response?.data?.detail || "팟 나가기에 실패했습니다.";
+      alert(errorMsg);
     }
   }
   
@@ -489,9 +489,6 @@ export default function ChatPage() {
                 type="text"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                onSubmit={(e) => {
-                  console.log("전송 ",e.target.value);
-                }}
                 onKeyDown={handleKeyDown}
                 placeholder={isSendingMessage?"전송 중...":"메시지를 입력하세요..."}
                 disabled={isSendingMessage}
@@ -518,7 +515,6 @@ export default function ChatPage() {
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            onSubmit={(e) => {console.log("전송 ",e.target.value);}}
             onKeyDown={handleKeyDownComment}
                 placeholder={isSendingComment?"댓글 전송 중...":"댓글을 입력하세요..."}
                 disabled={isSendingComment}
