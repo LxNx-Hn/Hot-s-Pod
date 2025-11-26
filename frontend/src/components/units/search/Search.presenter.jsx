@@ -145,37 +145,47 @@ export default function SearchPresenter({ query, setQuery, onSearch,
             <div className={`fixed right-4 bottom-4 z-10 cursor-pointer p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors ${isRAGOpened?"hidden":""}`} onClick={()=>{setIsRAGOpened(true)}}>
                 <SizeComponent Component={ChatIcon} onClick={()=>{setIsRAGOpened(false)}} className=" " fontSize={32}/>
             </div>
-            <div className={`fixed right-4 bottom-4 z-10 border-2 border-gray-400 rounded-xl py-4 bg-slate-500 opacity-80 ${isRAGOpened?"":"hidden"}`}>
+            <div className={`fixed right-4 bottom-4 z-10 border-2 border-gray-400 rounded-xl py-4 bg-slate-500 opacity-80 ${isRAGOpened ? '' : 'hidden'}`}>
                 <div className="flex flex-col h-full justify-between gap-2 px-2">
                     <div className="flex flex-row justify-between w-full">
                         <div className="font-bold border-b-gray-200 text-2xl">RAG ChatBot</div>
-                        <div className="rounded-full bg-red-500 cursor-pointer text-white font-bold px-3 flex flex-col justify-center" onClick={()=>{setIsRAGOpened(false)}}>X</div>
+                        <div className="rounded-full bg-red-500 cursor-pointer text-white font-bold px-3 flex items-center justify-center" onClick={()=>setIsRAGOpened(false)}>X</div>
                     </div>
+
                     <div className="flex flex-col h-80 overflow-auto gap-4">
-                        {RAGMessages.map((value)=>{
-                            return (<PodCard podData={value}/>)
-                        })}
+                        {RAGMessages?.map((value, i) => (
+                            <PodCard key={i} podData={value} />
+                        ))}
                     </div>
-                    <div className="flex flex-row w-full gap-2">
+
+                    <div className="flex flex-row w-full gap-2 items-center">
                         <input
                             type="text"
                             value={RAGquery}
                             onChange={(e) => setRAGquery(e.target.value)}
-                            onSubmit={(e) => {console.log("전송 ",e.target.value);}}
-                                                        onKeyDown={(e)=>{if (e.key === "Enter" && !e.shiftKey) {e.preventDefault();onSendRAG();setRAGquery("")}}}
-                                                        placeholder={isRAGGenerating? "생성 중... 잠시만 기다려주세요." : "챗봇에게 무엇이든 물어보세요."}
-                                                        disabled={isRAGGenerating}
-                                                        className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isRAGGenerating? 'bg-gray-100 cursor-not-allowed':''}`}
+                            onKeyDown={(e)=>{if (e.key === "Enter" && !e.shiftKey) {e.preventDefault(); onSendRAG(); setRAGquery("") }}}
+                            placeholder={isRAGGenerating ? "생성 중... 잠시만 기다려주세요." : "챗봇에게 무엇이든 물어보세요."}
+                            disabled={isRAGGenerating}
+                            className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isRAGGenerating ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         />
+
                         <div className="flex flex-col justify-center">
-                                                        <SizeComponent Component={KeyboardArrowUpIcon} onClick={()=>{onSendRAG();setRAGquery("");}} className={`cursor-pointer bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors ${isRAGGenerating? 'opacity-60 cursor-not-allowed':''}`} fontSize={32}/>
-                                                </div>
-                                                {isRAGGenerating && (
-                                                    <div className="flex items-center pl-2">
-                                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                                    </div>
-                                                )}
+                            <SizeComponent
+                                Component={KeyboardArrowUpIcon}
+                                onClick={() => { onSendRAG(); setRAGquery(""); }}
+                                className={`cursor-pointer bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors ${isRAGGenerating ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                fontSize={32}
+                            />
                         </div>
+
+                        {isRAGGenerating && (
+                            <div className="flex items-center pl-2">
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

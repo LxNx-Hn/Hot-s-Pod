@@ -41,11 +41,22 @@ class RagService: #친절한 주석 < -RAG서비스
                 place_keyword = keyword
                 break
         #대충 석장 들어가면 다 같은단어로 본다거나, 신경주역, 경주역 이런거 굳이 유사도검색없이 키워드 서칭할수있게해줌
-        query_vector = self.embedding_model.encode(query).tolist() #벡터화 입니당
-        results = self.collection.query( #이때 이미 질문기준으로 뒤에 워커파일이 유사도높은걸 가져와서 이거만 하면됩니당
-            query_embeddings=[query_vector],
-            n_results=20 #이게 출력되는 개순데, 이전에는 3개했었는데. 프렌들리 AI쓰면되니까 일단 늘려둠
-        )       
+        # 임베딩 생성 및 벡터 DB 쿼리 중 발생할 수 있는 예외를 잡아 호출자에게 명확히 알립니다.
+        try:
+            query_vector = self.embedding_model.encode(query).tolist() #벡터화 입니당
+        except Exception as e:
+            logger.exception(f"Embedding generation failed for query='{query}': {e}")
+            # ValueError로 던지면 controller에서 400으로 처리됩니다.
+            raise ValueError("임베딩 생성에 실패했습니다. 입력을 확인하세요.")
+
+        try:
+            results = self.collection.query( #이때 이미 질문기준으로 뒤에 워커파일이 유사도높은걸 가져와서 이거만 하면됩니당
+                query_embeddings=[query_vector],
+                n_results=20 #이게 출력되는 개순데, 이전에는 3개했었는데. 프렌들리 AI쓰면되니까 일단 늘려둠
+            )
+        except Exception as e:
+            logger.exception(f"Vector DB query failed for query='{query}': {e}")
+            raise ValueError("벡터 DB 검색 중 오류가 발생했습니다.")
         if not results['ids'] or not results['ids'][0]:
             logger.warning("No vector search results") # 진짜 예외처리 안하는데 코파일럿이 이거보고 죽일라해서 넣음
             return []
