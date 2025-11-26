@@ -26,7 +26,7 @@ import { toSeoulDate, formatSeoul } from "../../src/utils/time";
 
 const time_delta_string = (string_time) => {
   const createdAt = toSeoulDate(string_time);
-  const now = toSeoulDate(new Date()); // 현재 시간도 toSeoulDate 처리
+  const now = new Date(); // 브라우저 로컬 시간 (KST)
 
     const timeDelta = (now.getTime() - createdAt.getTime())/1000;
 
