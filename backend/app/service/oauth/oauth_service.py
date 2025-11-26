@@ -90,12 +90,8 @@ class OAuthService:
     
     def _update_admin_status(self, user_id: int, is_admin: bool) -> None:
         """관리자 상태 DB 업데이트"""
-        try:
-            with self.db.cursor() as cursor:
-                sql = "UPDATE user SET is_admin = %s WHERE user_id = %s"
-                cursor.execute(sql, (is_admin, user_id))
-                self.db.commit()
-                print(f"[SECURITY] Updated admin status - user_id: {user_id}, is_admin: {is_admin}")
-        except Exception as e:
-            print(f"[WARNING] Failed to update admin status - is_admin column may not exist: {e}")
-            # DB 스키마가 구버전이어도 로그인은 계속 진행
+        with self.db.cursor() as cursor:
+            sql = "UPDATE user SET is_admin = %s WHERE user_id = %s"
+            cursor.execute(sql, (is_admin, user_id))
+            self.db.commit()
+            print(f"[SECURITY] Updated admin status - user_id: {user_id}, is_admin: {is_admin}")
