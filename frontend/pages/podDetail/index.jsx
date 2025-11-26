@@ -385,6 +385,20 @@ export default function ChatPage() {
     }
   }
   
+  // 댓글 삭제
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('댓글을 삭제하시겠습니까?')) return;
+    
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/comments/${commentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      await refetchPodDetail();
+    } catch (error) {
+      alert('댓글 삭제에 실패했습니다.');
+    }
+  };
 
   // 로그인 체크 (라우트 가드가 이미 있다면 생략 가능)
   if (meLoading || messageLoading || podDetailLoading) {
