@@ -23,9 +23,11 @@ function runQueue(error, tokenRefreshed) {
 // 로그인 페이지로 보내는 헬퍼
 function redirectToLogin() {
   if (typeof window === "undefined") return;
-  if (window.location.pathname !== "/login") {
-    window.location.href = "/login"; // SPA 라우터가 /login 처리한다고 가정
-  }
+  const currentPath = window.location.pathname;
+  // 이미 로그인 페이지에 있거나 OAuth 콜백 중이면 리다이렉트하지 않음
+  if (currentPath === "/login" || currentPath === "/oauth/callback") return;
+  // SPA 라우터 사용
+  window.location.replace("/login");
 }
 
 api.interceptors.response.use(
@@ -38,6 +40,13 @@ api.interceptors.response.use(
       throw error;
     }
 
+    // refresh 엔드포인트 자체가 401이면 재시도하지 않음
+    if (original.url?.includes('/oauth/refresh')) {
+      console.log('[API] Refresh token expired or invalid');
+      redirectToLogin();
+      throw error;
+    }
+
     // 401이 아니거나, 이미 한 번 재시도한 요청이면 그대로 에러 전달
     if (error.response.status !== 401 || original.__retry) {
       throw error;
@@ -45,11 +54,15 @@ api.interceptors.response.use(
 
     // 이미 다른 곳에서 refresh 중이면 → 큐에 대기
     if (isRefreshing) {
-      await new Promise((resolve, reject) => {
-        pendingQueue.push({ resolve, reject });
-      });
-      original.__retry = true;
-      return api(original); // refresh 끝난 뒤 재시도
+      try {
+        await new Promise((resolve, reject) => {
+          pendingQueue.push({ resolve, reject });
+        });
+        original.__retry = true;
+        return api(original); // refresh 끝난 뒤 재시도
+      } catch (e) {
+        throw e;
+      }
     }
 
     isRefreshing = true;
@@ -68,11 +81,9 @@ api.interceptors.response.use(
       // refresh 실패 → 큐에 있던 요청들 전부 실패 처리
       runQueue(e, false);
 
-      // refresh도 401/403 등으로 실패 → 로그인 페이지로 이동
-      const status = e?.response?.status || error.response.status;
-      if (status === 401 || status === 403) {
-        redirectToLogin();
-      }
+      // refresh 실패 → 로그인 페이지로 이동
+      console.log('[API] Refresh failed, redirecting to login');
+      redirectToLogin();
 
       throw e;
     } finally {

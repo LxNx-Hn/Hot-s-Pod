@@ -24,7 +24,6 @@ async def kakao_login():
         f"?client_id={settings.KAKAO_REST_API_KEY}"
         f"&redirect_uri={settings.KAKAO_REDIRECT_URI}"
         f"&response_type=code"
-        f"&prompt=none"  # 이미 로그인되어 있으면 자동 인증
     )
     return RedirectResponse(url=kakao_auth_url)
 @router.get("/kakao/callback")
@@ -38,7 +37,8 @@ async def kakao_callback(
         # 에러가 있으면 프론트엔드로 리다이렉트
         if error:
             print(f"[oauth] 카카오 에러: {error} - {error_description}")
-            redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?error={error}"
+            # 로그인 페이지로 바로 보내기
+            redirect_url = f"{settings.FRONTEND_URL}/login?error={error}&message={error_description or ''}"
             return RedirectResponse(url=redirect_url, status_code=302)
         
         # code가 없으면 에러

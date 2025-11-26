@@ -18,17 +18,14 @@ async function fetchMe({ signal }) {
 }
 
 export function useMe() {
-  const navigate = useNavigate();
   return useQuery({
     queryKey: ["me"],
     queryFn: fetchMe,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: false, // 401 재시도는 인터셉터가 담당
-    onError: (error) => {
-      // 인증 실패시 로그인 페이지로 이동
-      navigate("/login");
-    }
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: false, // 401 재시도는 인터셉터가 담당, 여기서는 재시도 안함
   });
 }
