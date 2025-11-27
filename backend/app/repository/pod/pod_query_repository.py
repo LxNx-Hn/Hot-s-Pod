@@ -161,29 +161,21 @@ class PodQueryRepository:
             SELECT 
                 p.*,
                 COALESCE(u.username, '탈퇴한 회원') AS host_username,
-                (
-                    SELECT COUNT(DISTINCT pm.user_id)
-                    FROM pod_member pm
-                    WHERE pm.pod_id = p.pod_id
-                ) AS current_member,
-                COALESCE(
-                    (
-                        SELECT JSON_ARRAYAGG(sub.category_id)
-                        FROM (
-                            SELECT DISTINCT c2.category_id
-                            FROM categorylink cl2
-                            JOIN category c2 
-                                ON c2.category_id = cl2.category_id
-                            WHERE cl2.pod_id = p.pod_id
-                        ) AS sub
-                    ),
-                    JSON_ARRAY()
-                ) AS category_ids
-
+                COALESCE(pmAgg.current_member, 0) AS current_member,
+                COALESCE(clAgg.category_ids, JSON_ARRAY()) AS category_ids
             FROM pod p
             LEFT JOIN user u 
                 ON p.host_user_id = u.user_id
-
+            LEFT JOIN (
+                SELECT pod_id, COUNT(DISTINCT user_id) AS current_member
+                FROM pod_member
+                GROUP BY pod_id
+            ) pmAgg ON pmAgg.pod_id = p.pod_id
+            LEFT JOIN (
+                SELECT cl.pod_id, JSON_ARRAYAGG(DISTINCT cl.category_id) AS category_ids
+                FROM categorylink cl
+                GROUP BY cl.pod_id
+            ) clAgg ON clAgg.pod_id = p.pod_id
             WHERE
                 p.title LIKE %s
                 OR p.content LIKE %s
@@ -192,12 +184,10 @@ class PodQueryRepository:
                 OR EXISTS (
                     SELECT 1
                     FROM categorylink cl3
-                    JOIN category c3 
-                        ON c3.category_id = cl3.category_id
+                    JOIN category c3 ON c3.category_id = cl3.category_id
                     WHERE cl3.pod_id = p.pod_id
                       AND c3.category_name LIKE %s
                 )
-
             ORDER BY p.event_time DESC
             LIMIT %s OFFSET %s;
             """
