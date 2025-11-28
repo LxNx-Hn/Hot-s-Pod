@@ -73,8 +73,8 @@ class Settings(BaseSettings):
     # Netlify Production Domains (하드코딩)
     NETLIFY_DOMAINS: List[str] = [
         "https://hot-s-pod.netlify.app",
-        "https://hotspot.online",
-        "https://www.hotspot.online"
+        "https://hotspod.online",
+        "https://www.hotspod.online"
     ]
 
     model_config = {
