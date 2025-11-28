@@ -64,38 +64,60 @@ export default function MainUI({categories, selectedCategory, setSelectedCategor
                 </div>
                 {/* POD 목록 */}
                 <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap gap-4">
-                        {pods&&pods.map((pod) => {
-                            const daysLeft = Math.ceil((toSeoulDate(pod.event_time) - new Date()) / (1000 * 60 * 60 * 24));
-                            return (
-                            <div 
-                                key={pod.pod_id} 
-                                onClick={() => onPodClick && onPodClick(pod.pod_id)}
-                                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
-                            >
-                                <img className='h-24 rounded-t-lg w-full' src={imageData[pod?.category_ids?.[0] ?? 0]}/>
-                                <div className='flex flex-col gap-1 p-3'>
-                                    <div className="font-bold text-lg truncate">{pod.title}</div>
-                                    <div className="text-[#888888] text-xs">{pod.content}</div>
-                                    <div className='flex flex-row justify-between'>
-                                        <div className="text-[#888888] text-xs">모집중 ({pod.current_member}/{pod.max_peoples})명</div>
-                                        {daysLeft === 0 ? (
-                                            <div className='text-[#FDC862] text-xs font-semibold'>오늘 마감</div>
-                                        ) : daysLeft < 0 ? (
-                                            <div className='text-gray-500 text-xs font-semibold'>마감됨</div>
-                                        ) : (
-                                            <div className='text-[#FDC862] text-xs font-semibold'>D-{daysLeft}</div>
-                                        )}
-                                    </div>
-                                    <div className='flex flex-row gap-1'>
-                                        <SizeComponent Component={PlaceOutlinedIcon} fontSize={16}/>
-                                        <div className="text-xs text-gray-400">{pod.place_detail}{pod.place && ` (${pod.place})`}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )})}
-                    </div>
+  <div className="w-full flex flex-row justify-center">
+    <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
+      {pods && pods.map((pod) => {
+        const daysLeft = Math.ceil(
+          (toSeoulDate(pod.event_time).getTime() - new Date().getTime()) /
+          (1000 * 60 * 60 * 24)
+        );
+
+        return (
+          <div 
+            key={pod.pod_id} 
+            onClick={() => onPodClick && onPodClick(pod.pod_id)}
+            className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer w-40"
+          >
+            <img
+              className="h-24 rounded-t-lg w-full"
+              src={imageData[pod?.category_ids?.[0] ?? 0]}
+            />
+            <div className="flex flex-col gap-1 p-3">
+              <div className="font-bold text-lg truncate">{pod.title}</div>
+              <div className="text-[#888888] text-xs">{pod.content}</div>
+              <div className="flex flex-row justify-between">
+                <div className="text-[#888888] text-xs">
+                  모집중 ({pod.current_member}/{pod.max_peoples})명
                 </div>
+                {daysLeft === 0 ? (
+                  <div className="text-[#FDC862] text-xs font-semibold">
+                    오늘 마감
+                  </div>
+                ) : daysLeft < 0 ? (
+                  <div className="text-gray-500 text-xs font-semibold">
+                    마감됨
+                  </div>
+                ) : (
+                  <div className="text-[#FDC862] text-xs font-semibold">
+                    D-{daysLeft}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-row gap-1">
+                <SizeComponent Component={PlaceOutlinedIcon} fontSize={16} />
+                <div className="text-xs text-gray-400">
+                  {pod.place_detail}
+                  {pod.place && ` (${pod.place})`}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</div>
+
             </div>
             <Footer active={active} setActive={setActive}/>
         </div>

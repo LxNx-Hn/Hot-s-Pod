@@ -19,8 +19,8 @@ class UserQueryRepository:
             
             # profile_picture_enabled가 False면 placeholder 사용
             if res.get("profile_picture_enabled", True):
-                res["profile_picture"] = kakao_data.get("profile_picture", "") if kakao_data else ""
+                res["profile_picture"] = kakao_data.get("profile_picture", "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg") if kakao_data else "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg"
             else:
-                res["profile_picture"] = "https://via.placeholder.com/96"
+                res["profile_picture"] = "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg"
             
             return res
