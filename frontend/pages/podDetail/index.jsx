@@ -78,7 +78,7 @@ const CommentItem = ({
         <div className="flex flex-row justify-between">
           <div className="flex flex-row gap-2">
             <img
-              src={(isDeleted || isWithdrawnUser) ? "https://via.placeholder.com/32" : comment.profile_picture}
+              src={(isDeleted || isWithdrawnUser) ? "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg" : comment.profile_picture}
               className="w-8 h-8 rounded-full"
             />
             <div className="font-bold flex flex-col justify-center">{isDeleted ? "(삭제됨)" : (isWithdrawnUser ? "탈퇴한 회원" : comment.username)}</div>
@@ -645,7 +645,7 @@ export default function ChatPage() {
             <div className="font-bold text-xl">참여자({podDetail.current_member})</div>
             <div className="flex flex-row ml-3">
               {podDetail.members.length==0?<></>:podDetail.members.map((value,index)=>{
-                return (<img key={value.user_id} className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value.profile_picture} />)
+                return (<img key={value.user_id} className={`w-8 h-8 rounded-full border-2 border-white relative -ml-3 z-[${podDetail.members.length-index}0]`} src={value&&value.profile_picture?value.profile_picture:"http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg"} />)
               })}
             </div>
           </div>
