@@ -51,9 +51,9 @@ class PodQueryRepository:
                                                   END,
                             'profile_picture',    CASE
                                                       WHEN c.user_id IS NULL THEN NULL
-                                                      WHEN cu.profile_picture_enabled IS NULL THEN 'https://via.placeholder.com/32'
-                                                      WHEN cu.profile_picture_enabled = 1 THEN COALESCE(ka.profile_picture, 'https://via.placeholder.com/32')
-                                                      ELSE 'https://via.placeholder.com/32'
+                                                      WHEN cu.profile_picture_enabled IS NULL THEN 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg'
+                                                      WHEN cu.profile_picture_enabled = 1 THEN COALESCE(ka.profile_picture, 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg')
+                                                      ELSE 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg'
                                                   END,
                             'content',            c.content,
                             'created_at',         c.created_at,
@@ -92,9 +92,9 @@ class PodQueryRepository:
                             'user_id',         pm2.user_id,
                             'username',        COALESCE(u2.username, '탈퇴한 회원'),
                             'profile_picture', CASE
-                                                   WHEN u2.profile_picture_enabled IS NULL THEN 'https://via.placeholder.com/32'
-                                                   WHEN u2.profile_picture_enabled = 1 THEN COALESCE(ka2.profile_picture, 'https://via.placeholder.com/32')
-                                                   ELSE 'https://via.placeholder.com/32'
+                                                   WHEN u2.profile_picture_enabled IS NULL THEN 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg'
+                                                   WHEN u2.profile_picture_enabled = 1 THEN COALESCE(ka2.profile_picture, 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg')
+                                                   ELSE 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg'
                                                END,
                             'amount',          pm2.amount,
                             'joined_at',       pm2.joined_at

@@ -42,7 +42,7 @@ function Card({title,description,peoples,image,onClick}){
                 <div className='text-sm text-[#888888]'>참여 인원: {peoples}</div>
             </div>
             <div className='flex flex-col justify-center'>
-                <img className='h-24 rounded-t-lg w-36' src={image}/>
+                <img className='h-24 rounded-t-lg w-36' src={image?image:"http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg"}/>
             </div>
         </div>
     )
@@ -168,7 +168,7 @@ export default function MyPageUI() {
             </div>
             <div className='flex flex-row w-full justify-center'>
                 <img 
-                    src={user?.profile_picture_enabled ? user?.profile_picture : 'https://via.placeholder.com/96'} 
+                    src={user?.profile_picture_enabled ? user?.profile_picture : 'http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg'} 
                     className='w-24 h-24 rounded-full border-purple-600 border-[3px]'
                 />
             </div>
